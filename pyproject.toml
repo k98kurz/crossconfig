@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "crossconfig"
+version = "0.0.1"
+authors = [
+  { name="k98kurz", email="k98kurz@gmail.com" },
+]
+description = "Simple cross-platform settings/configuration package."
+readme = "readme.md"
+requires-python = ">=3.10"
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: ISC License (ISCL)",
+  "Operating System :: OS Independent",
+  "Topic :: Other/Nonlisted Topic",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/k98kurz/crossconfig"
+"Bug Tracker" = "https://github.com/k98kurz/crossconfig/issues"
