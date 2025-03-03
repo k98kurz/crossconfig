@@ -2,22 +2,6 @@
 
 ## Classes
 
-### `ABC`
-
-Helper class that provides a standard way to create an ABC using inheritance.
-
-### `Protocol(Generic)`
-
-Base class for protocol classes. Protocol classes are defined as:: class
-Proto(Protocol): def meth(self) -> int: ... Such classes are primarily used with
-static type checkers that recognize structural subtyping (static duck-typing),
-for example:: class C: def meth(self) -> int: return 0 def func(x: Proto) ->
-int: return x.meth() func(C()) # Passes static type check See PEP 544 for
-details. Protocol classes decorated with @typing.runtime_checkable act as
-simple-minded runtime protocols that check only the presence of given
-attributes, ignoring their type signatures. Protocol classes can be generic,
-they are defined as:: class GenProto(Protocol[T]): def meth(self) -> T: ...
-
 ### `ConfigProtocol(Protocol)`
 
 #### Methods
@@ -172,16 +156,6 @@ will return a valid path for the current user in Posix, and it is scoped to the
 app name.
 
 ## Functions
-
-### `abstractmethod():`
-
-A decorator indicating abstract methods. Requires that the metaclass is ABCMeta
-or derived from it. A class that has a metaclass derived from ABCMeta cannot be
-instantiated unless all of its abstract methods are overridden. The abstract
-methods can be called using any of the normal 'super' call mechanisms.
-abstractmethod() may be used to declare abstract methods for properties and
-descriptors. Usage: class C(metaclass=ABCMeta): @abstractmethod def
-my_abstract_method(self, ...): ...
 
 ### `get_config(app_name: str, portable: bool = False, replace: bool = False) -> ConfigProtocol:`
 
