@@ -33,8 +33,11 @@ be found [here](https://github.com/k98kurz/crossconfig/blob/master/docs.md).
 ```python
 from crossconfig import get_config
 
-# load the config for the current user
-config = get_config("my_app_name")
+# choose whether to load the config for the current user or a portable config
+portable = True
+
+# load the config
+config = get_config("my_app_name", portable=portable)
 config.load()
 
 # get a path for a subdirectory
@@ -45,7 +48,7 @@ config.set("my_setting", "my_value")
 
 # save and reload the config
 config.save()
-config = get_config("my_app_name")
+config = get_config("my_app_name", portable=portable)
 config.load()
 
 # get a setting
