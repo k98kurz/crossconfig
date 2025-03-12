@@ -17,6 +17,7 @@ def version() -> str:
 
 
 __all__ = [
+    "ConfigProtocol",
     "BaseConfig",
     "WindowsConfig",
     "PortableWindowsConfig",

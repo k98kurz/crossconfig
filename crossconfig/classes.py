@@ -28,6 +28,10 @@ class ConfigProtocol(Protocol):
         """Saves the settings to the config folder."""
         ...
 
+    def list(self) -> list[str]:
+        """Returns a list of all setting keys (names)."""
+        ...
+
     def get(self, key: str, default: str|int|None = None) -> str|int|None:
         """Returns the value of a setting or the default value if the
             setting does not exist.
@@ -86,6 +90,10 @@ class BaseConfig(ABC):
         settings_path = self.path("settings.json")
         with open(settings_path, "w") as f:
             json.dump(self.settings, f)
+
+    def list(self) -> list[str]:
+        """Returns a list of all setting keys (names)."""
+        return list(self.settings.keys())
 
     def get(self, key: str, default: str|int|None=None) -> str|int|None:
         """Returns the value of a setting or the default value if the

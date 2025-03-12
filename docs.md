@@ -22,6 +22,10 @@ Loads the settings from the config folder.
 
 Saves the settings to the config folder.
 
+##### `list() -> list[str]:`
+
+Returns a list of all setting keys (names).
+
 ##### `get(key: str, default: str | int | None = None) -> str | int | None:`
 
 Returns the value of a setting or the default value if the setting does not
@@ -65,6 +69,10 @@ dictionary.
 ##### `save():`
 
 Saves the settings to the config folder.
+
+##### `list() -> list[str]:`
+
+Returns a list of all setting keys (names).
 
 ##### `get(key: str, default: str | int | None = None) -> str | int | None:`
 
