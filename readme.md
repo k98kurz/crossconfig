@@ -78,6 +78,36 @@ config.save()
   behavior of `os.expanduser` or `os.getcwd` changes, this may break in the
   future.
 
+## More Resources
+
+Check out the [Pycelium discord server](https://discord.gg/b2QFEJDX69). If you
+experience a problem, please discuss it on the Discord server. All suggestions
+for improvement are also welcome, and the best place for that is also Discord.
+If you do not use Discord, open an issue or discussion thread on Github.
+
+## Testing
+
+To test, clone the repo and then execute the test files.
+
+On Windows:
+
+```cmd
+python tests\test_base.py
+python tests\test_windows.py
+```
+
+On civilized OSes:
+
+```bash
+find tests/ -name test_*.py -print -exec python {} \;
+```
+
+Testing suites are platform-specific, but the tests that should not run on a
+given platform will be skipped if their files are run.
+
+There are a total of 11 tests: 1 test of the base class functions; 5 tests for
+POSIX systems; and 5 tests for Windows.
+
 ## License
 
 Copyright (c) 2025 Jonathan Voss (k98kurz)
