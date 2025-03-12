@@ -48,7 +48,8 @@ config.set("my_setting", "my_value")
 
 # save and reload the config
 config.save()
-config = get_config("my_app_name", portable=portable)
+[config.unset(key) for key in config.list()]
+assert len(config.list()) == 0
 config.load()
 
 # get a setting
