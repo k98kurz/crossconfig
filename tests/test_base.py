@@ -4,12 +4,12 @@ import os
 
 class BaseConfig(crossconfig.BaseConfig):
     def path(self, file_or_subdir: str|list[str]|None = None) -> str:
-        base = f"base::{self.app_name}"
+        base = f"base--{self.app_name}"
         if file_or_subdir is None:
             return base
         if isinstance(file_or_subdir, list):
-            return f"{base}::" + '::'.join(file_or_subdir)
-        return f"{base}::{file_or_subdir}"
+            return f"{base}--" + '--'.join(file_or_subdir)
+        return f"{base}--{file_or_subdir}"
 
 
 class TestBase(unittest.TestCase):
@@ -21,8 +21,8 @@ class TestBase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        if os.path.exists(f"base::{cls.app_name}"):
-            os.rmdir(f"base::{cls.app_name}")
+        if os.path.exists(f"base--{cls.app_name}"):
+            os.rmdir(f"base--{cls.app_name}")
         return super().tearDownClass()
 
     def test_get_set_unset(self):
