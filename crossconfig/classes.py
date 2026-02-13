@@ -32,13 +32,13 @@ class ConfigProtocol(Protocol):
         """Returns a list of all setting keys (names)."""
         ...
 
-    def get(self, key: str, default: str|int|None = None) -> str|int|None:
+    def get(self, key: str, default: bool|str|int|float|None = None) -> bool|str|int|float|None:
         """Returns the value of a setting or the default value if the
             setting does not exist.
         """
         ...
 
-    def set(self, key: str, value: str|int) -> None:
+    def set(self, key: str, value: bool|str|int) -> None:
         """Updates the value of a setting."""
         ...
 
@@ -95,13 +95,13 @@ class BaseConfig(ABC):
         """Returns a list of all setting keys (names)."""
         return list(self.settings.keys())
 
-    def get(self, key: str, default: str|int|None=None) -> str|int|None:
+    def get(self, key: str, default: bool|str|int|float|None=None) -> bool|str|int|float|None:
         """Returns the value of a setting or the default value if the
             setting does not exist.
         """
         return self.settings.get(key, default)
 
-    def set(self, key: str, value: str|int) -> None:
+    def set(self, key: str, value: bool|str|int) -> None:
         """Updates the value of a setting."""
         self.settings[key] = value
 
@@ -184,11 +184,13 @@ class PortablePosixConfig(BaseConfig):
 
 _CONFIGS = {}
 
+system = platform.system if hasattr(platform, 'system') else lambda: platform.platform().split('-')[0]
+
 def get_config(app_name: str, portable: bool = False, replace: bool = False) -> ConfigProtocol:
     global _CONFIGS
     key = (app_name, portable)
     if key not in _CONFIGS or replace:
-        if platform.system() == "Windows":
+        if system() == "Windows":
             _CONFIGS[key] = PortableWindowsConfig(app_name) if portable else WindowsConfig(app_name)
         else:
             _CONFIGS[key] = PortablePosixConfig(app_name) if portable else PosixConfig(app_name)
