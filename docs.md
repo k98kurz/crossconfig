@@ -10,6 +10,10 @@
 
 Initializes the config object.
 
+##### `base_path() -> str:`
+
+Returns the base path to the config folder.
+
 ##### `path(file_or_subdir: str | list[str] | None = None) -> str:`
 
 Returns the path to the config folder or a file or subfolder within it. This
@@ -55,6 +59,10 @@ Removes a setting.
 ##### `__init__(app_name: str):`
 
 Initializes the config object.
+
+##### `base_path() -> str:`
+
+Returns the base path to the config folder.
 
 ##### `path(file_or_subdir: str | list[str] | None = None) -> str:`
 
@@ -104,30 +112,10 @@ Removes a setting.
 
 Initializes the config object.
 
-##### `path(file_or_subdir: str | list[str] | None = None) -> str:`
+##### `base_path() -> str:`
 
-Returns the path to the config folder or a file or subfolder within it. This
-will return a valid path for the current user in Windows, and it is scoped to
-the app name.
-
-### `PortableWindowsConfig(BaseConfig)`
-
-#### Annotations
-
-- app_name: <class 'str'>
-- settings: dict[str, str | int]
-
-#### Methods
-
-##### `__init__(app_name: str):`
-
-Initializes the config object.
-
-##### `path(file_or_subdir: str | list[str] | None = None) -> str:`
-
-Returns the path to the config folder or a file or subfolder within it. This
-will return a valid path for the current user in Windows, and it is scoped to
-the app name.
+Returns the path to the config folder. This will return a valid path for the
+current user in Windows, and it is scoped to the app name.
 
 ### `PosixConfig(BaseConfig)`
 
@@ -142,13 +130,12 @@ the app name.
 
 Initializes the config object.
 
-##### `path(file_or_subdir: str | list[str] | None = None) -> str:`
+##### `base_path() -> str:`
 
-Returns the path to the config folder or a file or subfolder within it. This
-will return a valid path for the current user in Posix, and it is scoped to the
-app name.
+Returns the path to the config folder. This will return a valid path for the
+current user in Posix, and it is scoped to the app name.
 
-### `PortablePosixConfig(BaseConfig)`
+### `PortableConfig(BaseConfig)`
 
 #### Annotations
 
@@ -161,11 +148,10 @@ app name.
 
 Initializes the config object.
 
-##### `path(file_or_subdir: str | list[str] | None = None) -> str:`
+##### `base_path() -> str:`
 
-Returns the path to the config folder or a file or subfolder within it. This
-will return a valid path for the current user in Posix, and it is scoped to the
-app name.
+Returns the path to the config folder. This will return a valid path for the
+current working directory, and it is scoped to the app name.
 
 ## Functions
 

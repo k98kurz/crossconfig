@@ -1,6 +1,11 @@
 ## 0.0.3
 
 - Corrections for type hints that were missed in 0.0.2
+- Changed path handling logic to use `os.path.join`
+- Consolidated portable configs to a single class since behavior is identical
+across platforms
+- Added forward compatibility for when Micro$lop inevitably rebrands their OS
+to "Copilot"
 - Updated docs.md
 
 ## 0.0.2

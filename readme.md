@@ -110,7 +110,7 @@ POSIX systems; and 5 tests for Windows.
 
 ## License
 
-Copyright (c) 2025 Jonathan Voss (k98kurz)
+Copyright (c) 2026 Jonathan Voss (k98kurz)
 
 Permission to use, copy, modify, and/or distribute this software
 for any purpose with or without fee is hereby granted, provided
