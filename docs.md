@@ -6,6 +6,10 @@
 
 #### Methods
 
+##### `__init__(app_name: str):`
+
+Initializes the config object.
+
 ##### `path(file_or_subdir: str | list[str] | None = None) -> str:`
 
 Returns the path to the config folder or a file or subfolder within it. This
@@ -26,12 +30,12 @@ Saves the settings to the config folder.
 
 Returns a list of all setting keys (names).
 
-##### `get(key: str, default: str | int | None = None) -> str | int | None:`
+##### `get(key: str, default: bool | str | int | float | None = None) -> bool | str | int | float | None:`
 
 Returns the value of a setting or the default value if the setting does not
 exist.
 
-##### `set(key: str, value: str | int):`
+##### `set(key: str, value: bool | str | int | float):`
 
 Updates the value of a setting.
 
@@ -74,12 +78,12 @@ Saves the settings to the config folder.
 
 Returns a list of all setting keys (names).
 
-##### `get(key: str, default: str | int | None = None) -> str | int | None:`
+##### `get(key: str, default: bool | str | int | float | None = None) -> bool | str | int | float | None:`
 
 Returns the value of a setting or the default value if the setting does not
 exist.
 
-##### `set(key: str, value: str | int):`
+##### `set(key: str, value: bool | str | int | float):`
 
 Updates the value of a setting.
 

@@ -38,7 +38,7 @@ class ConfigProtocol(Protocol):
         """
         ...
 
-    def set(self, key: str, value: bool|str|int) -> None:
+    def set(self, key: str, value: bool|str|int|float) -> None:
         """Updates the value of a setting."""
         ...
 
@@ -101,7 +101,7 @@ class BaseConfig(ABC):
         """
         return self.settings.get(key, default)
 
-    def set(self, key: str, value: bool|str|int) -> None:
+    def set(self, key: str, value: bool|str|int|float) -> None:
         """Updates the value of a setting."""
         self.settings[key] = value
 
