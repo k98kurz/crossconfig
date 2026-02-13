@@ -10,6 +10,10 @@ class ConfigProtocol(Protocol):
         """Initializes the config object."""
         ...
 
+    def base_path(self) -> str:
+        """Returns the base path to the config folder."""
+        ...
+
     def path(self, file_or_subdir: str|list[str]|None = None) -> str:
         """Returns the path to the config folder or a file or subfolder
             within it. This must return a valid path for the current
@@ -58,6 +62,10 @@ class BaseConfig(ABC):
         os.makedirs(self.path(), exist_ok=True)
 
     @abstractmethod
+    def base_path(self) -> str:
+        """Returns the base path to the config folder."""
+        pass
+
     def path(self, file_or_subdir: str|list[str]|None = None) -> str:
         """Returns the path to the config folder or a file or subfolder
             within it. This must return a valid path for the current
@@ -66,7 +74,11 @@ class BaseConfig(ABC):
             parts and joined together with the appropriate path
             separator for the current platform.
         """
-        pass
+        if not file_or_subdir:
+            return self.base_path()
+        if isinstance(file_or_subdir, str):
+            file_or_subdir = [file_or_subdir]
+        return os.path.join(self.base_path(), *file_or_subdir)
 
     def load(self) -> None|json.decoder.JSONDecodeError:
         """Loads the settings from the config folder if it exists. This
@@ -115,35 +127,12 @@ class WindowsConfig(BaseConfig):
         """Initializes the config object."""
         super().__init__(app_name)
 
-    def path(self, file_or_subdir: str|list[str]|None = None) -> str:
-        """Returns the path to the config folder or a file or subfolder
-            within it. This will return a valid path for the current
-            user in Windows, and it is scoped to the app name.
+    def base_path(self) -> str:
+        """Returns the path to the config folder. This will return a
+            valid path for the current user in Windows, and it is scoped
+            to the app name.
         """
-        base = f"{os.path.expanduser('~')}\\AppData\\Local\\{self.app_name}"
-        if file_or_subdir is None:
-            return base
-        if isinstance(file_or_subdir, list):
-            return f"{base}\\" + '\\'.join(file_or_subdir)
-        return f"{base}\\{file_or_subdir}"
-
-
-class PortableWindowsConfig(BaseConfig):
-    def __init__(self, app_name: str):
-        """Initializes the config object."""
-        super().__init__(app_name)
-
-    def path(self, file_or_subdir: str|list[str]|None = None) -> str:
-        """Returns the path to the config folder or a file or subfolder
-            within it. This will return a valid path for the current
-            user in Windows, and it is scoped to the app name.
-        """
-        base = f"{os.path.abspath(os.getcwd())}\\{self.app_name}"
-        if file_or_subdir is None:
-            return base
-        if isinstance(file_or_subdir, list):
-            return f"{base}\\" + '\\'.join(file_or_subdir)
-        return f"{base}\\{file_or_subdir}"
+        return os.path.join(os.path.expanduser('~'), "AppData", "Local", self.app_name)
 
 
 class PosixConfig(BaseConfig):
@@ -151,35 +140,25 @@ class PosixConfig(BaseConfig):
         """Initializes the config object."""
         super().__init__(app_name)
 
-    def path(self, file_or_subdir: str|list[str]|None = None) -> str:
-        """Returns the path to the config folder or a file or subfolder
-            within it. This will return a valid path for the current
-            user in Posix, and it is scoped to the app name.
+    def base_path(self) -> str:
+        """Returns the path to the config folder. This will return a
+            valid path for the current user in Posix, and it is scoped
+            to the app name.
         """
-        base = f"{os.path.expanduser('~')}/.config/{self.app_name}"
-        if file_or_subdir is None:
-            return base
-        if isinstance(file_or_subdir, list):
-            return f"{base}/{'/'.join(file_or_subdir)}"
-        return f"{base}/{file_or_subdir}"
+        return os.path.join(os.path.expanduser('~'), '.config', self.app_name)
 
 
-class PortablePosixConfig(BaseConfig):
+class PortableConfig(BaseConfig):
     def __init__(self, app_name: str):
         """Initializes the config object."""
         super().__init__(app_name)
 
-    def path(self, file_or_subdir: str|list[str]|None = None) -> str:
-        """Returns the path to the config folder or a file or subfolder
-            within it. This will return a valid path for the current
-            user in Posix, and it is scoped to the app name.
+    def base_path(self) -> str:
+        """Returns the path to the config folder. This will return a
+            valid path for the current working directory, and it is
+            scoped to the app name.
         """
-        base = f"{os.path.abspath(os.getcwd())}/{self.app_name}"
-        if file_or_subdir is None:
-            return base
-        if isinstance(file_or_subdir, list):
-            return f"{base}/{'/'.join(file_or_subdir)}"
-        return f"{base}/{file_or_subdir}"
+        return os.path.join(os.path.abspath(os.getcwd()), self.app_name)
 
 
 _CONFIGS = {}
@@ -190,8 +169,8 @@ def get_config(app_name: str, portable: bool = False, replace: bool = False) -> 
     global _CONFIGS
     key = (app_name, portable)
     if key not in _CONFIGS or replace:
-        if system() == "Windows":
-            _CONFIGS[key] = PortableWindowsConfig(app_name) if portable else WindowsConfig(app_name)
+        if system().lower() in ("windows", "copilot"): # getting ahead of Micro$lop on this
+            _CONFIGS[key] = PortableConfig(app_name) if portable else WindowsConfig(app_name)
         else:
-            _CONFIGS[key] = PortablePosixConfig(app_name) if portable else PosixConfig(app_name)
+            _CONFIGS[key] = PortableConfig(app_name) if portable else PosixConfig(app_name)
     return _CONFIGS[key]

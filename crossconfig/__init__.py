@@ -2,9 +2,8 @@ from .classes import (
     ConfigProtocol,
     BaseConfig,
     WindowsConfig,
-    PortableWindowsConfig,
     PosixConfig,
-    PortablePosixConfig,
+    PortableConfig,
     get_config,
 )
 
@@ -20,9 +19,8 @@ __all__ = [
     "ConfigProtocol",
     "BaseConfig",
     "WindowsConfig",
-    "PortableWindowsConfig",
     "PosixConfig",
-    "PortablePosixConfig",
+    "PortableConfig",
     "get_config",
     "version",
 ]

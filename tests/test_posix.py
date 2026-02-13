@@ -48,11 +48,11 @@ class TestPosix(unittest.TestCase):
         config = crossconfig.get_config(self.app_name, portable=False)
         assert type(config) is crossconfig.PosixConfig
         config = crossconfig.get_config(self.app_name, portable=True)
-        assert type(config) is crossconfig.PortablePosixConfig
+        assert type(config) is crossconfig.PortableConfig
 
     def test_set_and_get_portable(self):
         val = os.urandom(10).hex()
-        config = crossconfig.PortablePosixConfig(self.app_name)
+        config = crossconfig.PortableConfig(self.app_name)
         assert config.get("test") is None
         config.set("test", val)
         assert config.get("test") == val
@@ -70,10 +70,10 @@ class TestPosix(unittest.TestCase):
 
     def test_save_and_load(self):
         val = os.urandom(10).hex()
-        config = crossconfig.PortablePosixConfig(self.app_name)
+        config = crossconfig.PortableConfig(self.app_name)
         config.set("test", val)
         config.save()
-        config = crossconfig.PortablePosixConfig(self.app_name)
+        config = crossconfig.PortableConfig(self.app_name)
         assert config.get("test") is None
         config.load()
         assert config.get("test") == val

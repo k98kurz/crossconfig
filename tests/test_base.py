@@ -3,13 +3,8 @@ import unittest
 import os
 
 class BaseConfig(crossconfig.BaseConfig):
-    def path(self, file_or_subdir: str|list[str]|None = None) -> str:
-        base = f"base--{self.app_name}"
-        if file_or_subdir is None:
-            return base
-        if isinstance(file_or_subdir, list):
-            return f"{base}--" + '--'.join(file_or_subdir)
-        return f"{base}--{file_or_subdir}"
+    def base_path(self) -> str:
+        return f"base--{self.app_name}"
 
 
 class TestBase(unittest.TestCase):
