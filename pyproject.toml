@@ -11,6 +11,7 @@ authors = [
 description = "Simple cross-platform settings/configuration package."
 readme = "readme.md"
 requires-python = ">=3.10"
+license = { file = "license" }
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Programming Language :: Python :: 3",

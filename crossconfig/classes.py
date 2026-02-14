@@ -53,7 +53,7 @@ class ConfigProtocol(Protocol):
 
 class BaseConfig(ABC):
     app_name: str
-    settings: dict[str, str|int]
+    settings: dict[str, bool|str|int|float]
 
     def __init__(self, app_name: str):
         """Initializes the config object."""
