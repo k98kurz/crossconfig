@@ -1,3 +1,11 @@
+## 0.0.4
+
+- Added publish/subscribe event system for configuration changes
+- New methods: `subscribe()`, `unsubscribe()`, `publish()`
+- Automatic events: `set_{key}` and `unset_{key}` fire on setting modifications
+- Wildcard subscription support: `*_{key}`, `set_*`, `unset_*`, and `*`
+- Listener exceptions are suppressed to prevent breaking the config system
+
 ## 0.0.3
 
 - Corrections for type hints that were missed in 0.0.2

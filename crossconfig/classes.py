@@ -54,7 +54,8 @@ class ConfigProtocol(Protocol):
 
     def subscribe(self, event: str, listener: Callable[[str, Any], None]) -> None:
         """Adds a subscription to the event. Available events published
-            automatically are `set_{key}` and `unset_{key}`.
+            automatically are `set_{key}` and `unset_{key}`. The
+            listener will be called with the event name and data.
         """
         ...
 
@@ -147,7 +148,8 @@ class BaseConfig(ABC):
 
     def subscribe(self, event: str, listener: Callable[[str, Any], None]) -> None:
         """Adds a subscription to the event. Available events published
-            automatically are `set_{key}` and `unset_{key}`.
+            automatically are `set_{key}` and `unset_{key}`. The
+            listener will be called with the event name and data.
         """
         if event not in self._subscriptions:
             self._subscriptions[event] = []

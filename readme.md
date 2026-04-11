@@ -63,12 +63,90 @@ config.save()
 ```
 </details>
 
+### Event Notifications
+
+The config object supports a publish/subscribe event system for reacting to
+configuration changes.
+
+<details>
+<summary>Basic Event Subscription</summary>
+
+You can subscribe to automatic events that fire when settings are set or unset:
+
+```python
+from crossconfig import get_config
+
+config = get_config("my_app")
+
+# Define a listener function
+def on_setting_change(event, data):
+    print(f"Event: {event}, Data: {data}")
+
+# Subscribe to a specific key being set/unset
+config.subscribe("set_theme", on_setting_change)
+config.subscribe("unset_theme", on_setting_change)
+
+# Set/unset a setting - this will trigger the listener
+config.set("theme", "dark")  # Prints: Event: set_theme, Data: dark
+config.unset("theme")  # Prints: Event: unset_theme, Data: None
+```
+</details>
+
+<details>
+<summary>Wildcard Subscriptions</summary>
+
+Wildcard patterns let you subscribe to multiple events at once:
+
+```python
+config = get_config("my_app")
+
+# Subscribe to ALL set/unset events
+config.subscribe("set_*", lambda e, d: print(f"Setting changed: {e}"))
+config.subscribe("unset_*", lambda e, d: print(f"Setting removed: {e}"))
+
+# Subscribe to ANY event on a specific key (set or unset)
+config.subscribe("*_theme", lambda e, d: print(f"Theme changed: {e}"))
+
+# Subscribe to ALL events (wildcard of wildcards)
+config.subscribe("*", lambda e, d: print(f"Any event: {e}"))
+
+config.set("theme", "dark")
+config.set("language", "en")
+config.unset("theme")
+```
+</details>
+
+<details>
+<summary>Manual Event Publishing & Unsubscribing</summary>
+
+You can publish custom events and remove subscriptions:
+
+```python
+config = get_config("my_app")
+
+listener = lambda e, d: print(f"Event: {e}, Data: {d}")
+
+# Subscribe to a custom event
+config.subscribe("custom_event", listener)
+
+# Publish a custom event
+config.publish("custom_event", {"message": "hello"})
+# Prints: Event: custom_event, Data: {'message': 'hello'}
+
+# Unsubscribe the listener
+config.unsubscribe("custom_event", listener)
+
+# Publishing now won't trigger the listener
+config.publish("custom_event", {"message": "hello again"})
+```
+</details>
+
 ### Notes
 
 - The `load` method will return a JSON decode error if the config file is not
   valid JSON. If it loads successfully, it will return `None`.
 - There is no lock for multi-threaded access to the config object or file.
-  calling `save` or `load` in a multi-threaded environment may result in a race
+  Calling `save` or `load` in a multi-threaded environment may result in a race
   condition.
 - If a setting is set in one instance of the config object, it will be
   reflected in all other instances of the config object retrieved with the same
@@ -105,7 +183,7 @@ find tests/ -name test_*.py -print -exec python {} \;
 Testing suites are platform-specific, but the tests that should not run on a
 given platform will be skipped if their files are run.
 
-There are a total of 11 tests: 1 test of the base class functions; 5 tests for
+There are a total of 28 tests: 18 test of the base class methods; 5 tests for
 POSIX systems; and 5 tests for Windows.
 
 ## License

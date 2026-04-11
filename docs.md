@@ -47,12 +47,28 @@ Updates the value of a setting.
 
 Removes a setting.
 
+##### `subscribe(event: str, listener: Callable):`
+
+Adds a subscription to the event. Available events published automatically are
+`set_{key}` and `unset_{key}`. The listener will be called with the event name
+and data.
+
+##### `unsubscribe(event: str, listener: Callable):`
+
+Removes a subscription to the event. Available events published automatically
+are `set_{key}` and `unset_{key}`.
+
+##### `publish(event: str, data: Any):`
+
+Publishes an event to the subscribers.
+
 ### `BaseConfig(ABC)`
 
 #### Annotations
 
 - app_name: <class 'str'>
-- settings: dict[str, str | int]
+- settings: dict[str, bool | str | int | float]
+- _subscriptions: dict[str, list[typing.Callable[[str, typing.Any], NoneType]]]
 
 #### Methods
 
@@ -99,12 +115,28 @@ Updates the value of a setting.
 
 Removes a setting.
 
+##### `subscribe(event: str, listener: Callable):`
+
+Adds a subscription to the event. Available events published automatically are
+`set_{key}` and `unset_{key}`. The listener will be called with the event name
+and data.
+
+##### `unsubscribe(event: str, listener: Callable):`
+
+Removes a subscription to the event. Available events published automatically
+are `set_{key}` and `unset_{key}`.
+
+##### `publish(event: str, data: Any):`
+
+Publishes an event to the subscribers.
+
 ### `WindowsConfig(BaseConfig)`
 
 #### Annotations
 
 - app_name: <class 'str'>
-- settings: dict[str, str | int]
+- settings: dict[str, bool | str | int | float]
+- _subscriptions: dict[str, list[typing.Callable[[str, typing.Any], NoneType]]]
 
 #### Methods
 
@@ -122,7 +154,8 @@ current user in Windows, and it is scoped to the app name.
 #### Annotations
 
 - app_name: <class 'str'>
-- settings: dict[str, str | int]
+- settings: dict[str, bool | str | int | float]
+- _subscriptions: dict[str, list[typing.Callable[[str, typing.Any], NoneType]]]
 
 #### Methods
 
@@ -140,7 +173,8 @@ current user in Posix, and it is scoped to the app name.
 #### Annotations
 
 - app_name: <class 'str'>
-- settings: dict[str, str | int]
+- settings: dict[str, bool | str | int | float]
+- _subscriptions: dict[str, list[typing.Callable[[str, typing.Any], NoneType]]]
 
 #### Methods
 
@@ -156,6 +190,9 @@ current working directory, and it is scoped to the app name.
 ## Functions
 
 ### `get_config(app_name: str, portable: bool = False, replace: bool = False) -> ConfigProtocol:`
+
+Get the correct Config singleton. This is the primary/recommended way to use the
+library.
 
 ### `version() -> str:`
 
