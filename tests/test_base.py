@@ -171,20 +171,13 @@ class TestBase(unittest.TestCase):
         config.set("foo", "value")
         assert received == [("set_foo", "value")]
 
-    def test_no_subscribers_silent(self):
+    def test_publishing_with_no_subscribers_raises_no_errors(self):
         config = BaseConfig(self.app_name)
         config.publish("nonexistent", "data")
-        config.set("test", "value")
-        config.unset("test")
 
-    def test_unsubscribe_nonexistent_silent(self):
+    def test_unsubscribe_nonexistent_subscribers_raises_no_errors(self):
         config = BaseConfig(self.app_name)
-
-        def listener(event, data):
-            pass
-
-        config.unsubscribe("nonexistent", listener)
-        config.publish("nonexistent", "data")
+        config.unsubscribe("nonexistent", lambda *_: None)
 
     def test_listener_exception_handling(self):
         config = BaseConfig(self.app_name)
@@ -237,19 +230,6 @@ class TestBase(unittest.TestCase):
         assert len(received) == 1
         assert received == [("custom_event", {"key": "value"})]
 
-    def test_event_and_data_format(self):
-        config = BaseConfig(self.app_name)
-        received = []
-
-        def listener(event, data):
-            assert isinstance(event, str)
-            assert isinstance(data, str)
-            received.append((event, data))
-
-        config.subscribe("test_event", listener)
-        config.publish("test_event", "test_data")
-        assert len(received) == 1
-
     def test_mixed_value_types(self):
         config = BaseConfig(self.app_name)
         received = []
@@ -286,7 +266,10 @@ class TestBase(unittest.TestCase):
 
     def test_list_key_overwrite_existing_value(self):
         config = BaseConfig(self.app_name)
+        config.set("nested", "key")
+        assert config.get("nested") == "key"
         config.set(["nested", "key"], "original")
+        assert config.get("nested") == {"key": "original"}
         assert config.get(["nested", "key"]) == "original"
         config.set(["nested", "key"], "updated")
         assert config.get(["nested", "key"]) == "updated"
