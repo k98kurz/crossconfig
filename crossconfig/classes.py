@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Protocol
 import json
@@ -37,14 +39,14 @@ class ConfigProtocol(Protocol):
         ...
 
     def get(
-            self, key: str, default: bool|str|int|float|None = None
-        ) -> bool|str|int|float|None:
+            self, key: str|list[str], default: bool|str|int|float|list|dict|None = None
+        ) -> bool|str|int|float|list|dict|None:
         """Returns the value of a setting or the default value if the
             setting does not exist.
         """
         ...
 
-    def set(self, key: str, value: bool|str|int|float) -> None:
+    def set(self, key: str|list[str], value: bool|str|int|float|list|dict) -> None:
         """Updates the value of a setting."""
         ...
 
@@ -72,7 +74,7 @@ class ConfigProtocol(Protocol):
 
 class BaseConfig(ABC):
     app_name: str
-    settings: dict[str, bool|str|int|float]
+    settings: dict[str, bool|str|int|float|list|dict]
     _subscriptions: dict[str, list[Callable[[str, Any], None]]]
 
     def __init__(self, app_name: str):
@@ -129,17 +131,33 @@ class BaseConfig(ABC):
         return list(self.settings.keys())
 
     def get(
-            self, key: str, default: bool|str|int|float|None=None
-        ) -> bool|str|int|float|None:
+            self, key: str|list[str], default: bool|str|int|float|list|dict|None=None
+        ) -> bool|str|int|float|list|dict|None:
         """Returns the value of a setting or the default value if the
             setting does not exist.
         """
-        return self.settings.get(key, default)
+        if isinstance(key, str):
+            return self.settings.get(key, default)
+        current = self.settings
+        for part in key:
+            if not isinstance(current, dict) or part not in current:
+                return default
+            current = current[part]
+        return current
 
-    def set(self, key: str, value: bool|str|int|float) -> None:
+    def set(self, key: str|list[str], value: bool|str|int|float|list|dict) -> None:
         """Updates the value of a setting."""
-        self.settings[key] = value
-        self.publish(f"set_{key}", value)
+        if isinstance(key, str):
+            self.settings[key] = value
+            self.publish(f"set_{key}", value)
+        else:
+            current = self.settings
+            for part in key[:-1]:
+                if part not in current or not isinstance(current[part], dict):
+                    current[part] = {}
+                current = current[part]
+            current[key[-1]] = value
+            self.publish(f"set_{'_'.join(key)}", value)
 
     def unset(self, key: str) -> None:
         """Removes a setting."""

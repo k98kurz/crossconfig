@@ -51,6 +51,11 @@ class TestBase(unittest.TestCase):
         config.set("foo", "bar")
         assert received == [("set_foo", "bar")]
 
+        received.clear()
+        config.subscribe("set_a_b_c", listener)
+        config.set(["a", "b", "c"], 123)
+        assert received == [("set_a_b_c", 123)]
+
     def test_unset_triggers_event(self):
         config = BaseConfig(self.app_name)
         received = []
@@ -96,10 +101,12 @@ class TestBase(unittest.TestCase):
 
         config.subscribe("*", listener)
         config.set("foo", "value1")
+        config.set(["nested", "path", "value"], "nested_value")
         config.unset("foo")
         config.publish("custom", "custom_data")
-        assert len(received) == 3
+        assert len(received) == 4
         assert ("set_foo", "value1") in received
+        assert ("set_nested_path_value", "nested_value") in received
         assert ("unset_foo", None) in received
         assert ("custom", "custom_data") in received
 
@@ -113,10 +120,12 @@ class TestBase(unittest.TestCase):
         config.subscribe("set_*", listener)
         config.set("foo", "value1")
         config.set("bar", "value2")
+        config.set(["nested", "key"], "nested_value")
         config.unset("foo")
-        assert len(received) == 2
+        assert len(received) == 3
         assert ("set_foo", "value1") in received
         assert ("set_bar", "value2") in received
+        assert ("set_nested_key", "nested_value") in received
 
     def test_wildcard_unset_star(self):
         config = BaseConfig(self.app_name)
@@ -255,6 +264,43 @@ class TestBase(unittest.TestCase):
         config.set("qux", 3.14)
         assert len(received) == 1
         assert received == [("set_foo", "string_value")]
+
+    def test_list_key_single_element(self):
+        config = BaseConfig(self.app_name)
+        config.set(["simple_key"], "simple_value")
+        assert config.get(["simple_key"]) == "simple_value"
+        assert config.get("simple_key") == "simple_value"
+
+    def test_list_key_nested_structure_creation(self):
+        config = BaseConfig(self.app_name)
+        config.set(["thing", "does", "not", "exist"], 123)
+        assert config.get(["thing", "does", "not", "exist"]) == 123
+        assert config.settings["thing"]["does"]["not"]["exist"] == 123
+        assert config.settings["thing"] == {"does": {"not": {"exist": 123}}}
+
+    def test_list_key_get_with_default(self):
+        config = BaseConfig(self.app_name)
+        config.set(["exists"], "value")
+        assert config.get(["exists", "missing"], "default_val") == "default_val"
+        assert config.get(["completely", "missing", "path"], 42) == 42
+
+    def test_list_key_overwrite_existing_value(self):
+        config = BaseConfig(self.app_name)
+        config.set(["nested", "key"], "original")
+        assert config.get(["nested", "key"]) == "original"
+        config.set(["nested", "key"], "updated")
+        assert config.get(["nested", "key"]) == "updated"
+
+    def test_list_key_intermediate_dict_preservation(self):
+        config = BaseConfig(self.app_name)
+        config.set(["path", "to", "value1"], 100)
+        config.set(["path", "to", "value2"], 200)
+        config.set(["path", "from", "value3"], 300)
+        assert config.get(["path", "to", "value1"]) == 100
+        assert config.get(["path", "to", "value2"]) == 200
+        assert config.get(["path", "from", "value3"]) == 300
+        assert config.settings["path"]["to"] == {"value1": 100, "value2": 200}
+        assert config.settings["path"]["from"] == {"value3": 300}
 
 
 if __name__ == "__main__":
