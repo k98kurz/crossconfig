@@ -1,7 +1,7 @@
 from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Protocol
+from .errors import type_assert
 import json
 import platform
 import os
@@ -65,26 +65,33 @@ class ConfigProtocol(Protocol):
         """
         ...
 
-    def subscribe(self, event: str, listener: Callable[[str, Any], None]) -> None:
+    def subscribe(
+            self, event: str|tuple[str],
+            listener: Callable[[str|tuple[str], Any], None]
+        ) -> None:
         """Adds a subscription to the event. Automatic events include
-            'set_{key}' and 'unset_{key}' for config changes. List keys
-            generate events with parts joined by '_' (e.g., 'set_a_b_c').
-            Wildcards: '*_{key}', 'set_*', 'unset_*', and '*' (all).
-            The listener receives (event_name, data).
+            ('set', *key) and ('unset', *key) for config changes.
+            Wildcards: ('*', *key), ('set', '*'), ('unset', '*'), and
+            '*'/('*',) (all). The listener receives (event_key, data).
         """
         ...
 
-    def unsubscribe(self, event: str, listener: Callable[[str, Any], None]) -> None:
+    def unsubscribe(
+            self, event: tuple[str], listener: Callable[[str|tuple[str], Any], None]
+        ) -> None:
         """Removes a subscription to the event. Available events
-            published automatically are `set_{key}` and `unset_{key}`.
+            published automatically are ('set', *key) and
+            ('unset', *key).
         """
         ...
 
-    def publish(self, event: str, data: Any) -> None:
-        """Publishes an event to the subscribers. Fires exact matches,
-            wildcards (*_{key}, set_*, unset_*, *), and deduplicates
-            listeners before calling them. Exceptions raised by
-            listeners are suppressed.
+    def publish(self, event: tuple[str], data: Any) -> None:
+        """Publishes an event to the subscribers. Bubbles up from exact
+            matches, through intermediate levels of a nested event, and
+            wildcards (i.e. ('*', *key), ('set', '*'), ('unset', '*'),
+            ('*',)). Deduplicates listeners to avoid calling the same
+            listener more than once. Exceptions raised by listeners are
+            suppressed.
         """
         ...
 
@@ -92,7 +99,7 @@ class ConfigProtocol(Protocol):
 class BaseConfig(ABC):
     app_name: str
     settings: dict[str, bool|str|int|float|list|dict]
-    _subscriptions: dict[str, list[Callable[[str, Any], None]]]
+    _subscriptions: dict[tuple[str], list[Callable[[str|tuple[str], Any], None]]]
 
     def __init__(self, app_name: str):
         """Initializes the config object."""
@@ -174,7 +181,7 @@ class BaseConfig(ABC):
         """
         if isinstance(key, str):
             self.settings[key] = value
-            self.publish(f"set_{key}", value)
+            self.publish(("set", key), value)
         else:
             current = self.settings
             for part in key[:-1]:
@@ -182,7 +189,7 @@ class BaseConfig(ABC):
                     current[part] = {}
                 current = current[part]
             current[key[-1]] = value
-            self.publish(f"set_{'_'.join(key)}", value)
+            self.publish(("set", *key), value)
 
     def unset(self, key: str|list[str]) -> None:
         """Removes a setting. For nested values, pass a list of key parts
@@ -191,7 +198,7 @@ class BaseConfig(ABC):
         """
         if isinstance(key, str):
             self.settings.pop(key, None)
-            self.publish(f"unset_{key}", None)
+            self.publish(("unset", key), None)
         else:
             if not key:
                 return
@@ -206,24 +213,42 @@ class BaseConfig(ABC):
             if isinstance(current, dict) and key[-1] in current:
                 del current[key[-1]]
 
-            self.publish(f"unset_{'_'.join(key)}", None)
+            self.publish(("unset", *key), None)
 
-    def subscribe(self, event: str, listener: Callable[[str, Any], None]) -> None:
+    def subscribe(
+            self, event: str|tuple[str],
+            listener: Callable[[str|tuple[str], Any], None]
+        ) -> None:
         """Adds a subscription to the event. Automatic events include
-            'set_{key}' and 'unset_{key}' for config changes. List keys
-            generate events with parts joined by '_' (e.g., 'set_a_b_c').
-            Wildcards: '*_{key}', 'set_*', 'unset_*', and '*' (all).
-            The listener receives (event_name, data).
+            ('set', *key) and ('unset', *key) for config changes.
+            Wildcards: ('*', *key), ('set', '*'), ('unset', '*'), and
+            '*'/('*',) (all). The listener receives (event_key, data).
         """
+        type_assert(type(event) in (str, tuple), 'event must be str|tuple[str]')
+        if type(event) is tuple:
+            type_assert(
+                all([type(t) is str for t in event]), 'event must be str|tuple[str]'
+            )
+        type_assert(callable(listener), 'listener must be callable')
         if event not in self._subscriptions:
             self._subscriptions[event] = []
         if listener not in self._subscriptions[event]:
             self._subscriptions[event].append(listener)
 
-    def unsubscribe(self, event: str, listener: Callable[[str, Any], None]) -> None:
+    def unsubscribe(
+            self, event: str|tuple[str],
+            listener: Callable[[str|tuple[str], Any], None]
+        ) -> None:
         """Removes a subscription to the event. Available events
-            published automatically are `set_{key}` and `unset_{key}`.
+            published automatically are ('set', *key) and
+            ('unset', *key).
         """
+        type_assert(type(event) in (str, tuple), 'event must be str|tuple[str]')
+        if type(event) is tuple:
+            type_assert(
+                all([type(t) is str for t in event]), 'event must be str|tuple[str]'
+            )
+        type_assert(callable(listener), 'listener must be callable')
         if event not in self._subscriptions:
             return
         try:
@@ -231,31 +256,38 @@ class BaseConfig(ABC):
         except ValueError:
             ...
 
-    def publish(self, event: str, data: Any) -> None:
-        """Publishes an event to the subscribers. Fires exact matches,
-            wildcards (*_{key}, set_*, unset_*, *), and deduplicates
-            listeners before calling them. Exceptions raised by
-            listeners are suppressed.
+    def publish(self, event: str|tuple[str], data: Any) -> None:
+        """Publishes an event to the subscribers. Bubbles up from exact
+            matches, through intermediate levels of a nested event, and
+            wildcards (i.e. ('*', *key), ('set', '*'), ('unset', '*'),
+            ('*',)). Deduplicates listeners to avoid calling the same
+            listener more than once. Exceptions raised by listeners are
+            suppressed.
         """
+        type_assert(type(event) in (str, tuple), 'event must be str|tuple[str]')
+        if type(event) is tuple:
+            type_assert(
+                all([type(t) is str for t in event]), 'event must be str|tuple[str]'
+            )
         listeners = []
-        if event in self._subscriptions:
-            listeners.extend(self._subscriptions[event])
+        listeners.extend(self._subscriptions.get(event, []))
 
-        if event[:4] == 'set_' or event[:6] == 'unset_':
-            key = event[4:] if event[:4] == 'set_' else event[6:]
-            if f"*_{key}" in self._subscriptions:
-                listeners.extend(self._subscriptions[f"*_{key}"])
+        if event[0] in ('set', 'unset'):
+            key = event[1:]
+            # bubble up the event from deepest to shallowest listeners
+            for i in range(len(key), -1, -1):
+                listeners.extend(self._subscriptions.get((event[0], *key[:i]), []))
+                listeners.extend(self._subscriptions.get(('*', *key[:i]), []))
+            listeners.extend(self._subscriptions.get((event[0], '*'), []))
 
-        if event[:4] == 'set_' and 'set_*' in self._subscriptions:
-            listeners.extend(self._subscriptions['set_*'])
+        listeners.extend(self._subscriptions.get('*', []))
+        listeners.extend(self._subscriptions.get(('*',), []))
 
-        if event[:6] == 'unset_' and 'unset_*' in self._subscriptions:
-            listeners.extend(self._subscriptions['unset_*'])
-
-        if '*' in self._subscriptions:
-            listeners.extend(self._subscriptions['*'])
-
-        for listener in set(listeners):
+        called = set()
+        for listener in listeners:
+            if listener in called:
+                continue
+            called.add(listener)
             try:
                 listener(event, data)
             except:

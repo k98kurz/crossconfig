@@ -47,14 +47,14 @@ class TestBase(unittest.TestCase):
         def listener(event, data):
             received.append((event, data))
 
-        config.subscribe("set_foo", listener)
+        config.subscribe(("set", "foo"), listener)
         config.set("foo", "bar")
-        assert received == [("set_foo", "bar")]
+        assert received == [(("set", "foo"), "bar")]
 
         received.clear()
-        config.subscribe("set_a_b_c", listener)
+        config.subscribe(("set", "a", "b", "c"), listener)
         config.set(["a", "b", "c"], 123)
-        assert received == [("set_a_b_c", 123)]
+        assert received == [(("set", "a", "b", "c"), 123)]
 
     def test_unset_triggers_event(self):
         config = BaseConfig(self.app_name)
@@ -63,9 +63,9 @@ class TestBase(unittest.TestCase):
         def listener(event, data):
             received.append((event, data))
 
-        config.subscribe("unset_foo", listener)
+        config.subscribe(("unset", "foo"), listener)
         config.unset("foo")
-        assert received == [("unset_foo", None)]
+        assert received == [(("unset", "foo"), None)]
 
     def test_list_key_unset(self):
         config = BaseConfig(self.app_name)
@@ -83,14 +83,14 @@ class TestBase(unittest.TestCase):
         def listener(event, data):
             received.append((event, data))
 
-        config.subscribe("unset_*", listener)
+        config.subscribe(("unset", "*"), listener)
         config.set(["parent", "child"], "value")
         received.clear()
         config.unset(["parent", "child"])
-        assert received == [("unset_parent_child", None)]
+        assert received == [(("unset", "parent", "child"), None)]
         received.clear()
         config.unset(["nonexistent", "path"])
-        assert received == [("unset_nonexistent_path", None)]
+        assert received == [(("unset", "nonexistent", "path"), None)]
 
     def test_unsubscribe_removes_listener(self):
         config = BaseConfig(self.app_name)
@@ -130,9 +130,9 @@ class TestBase(unittest.TestCase):
         config.unset("foo")
         config.publish("custom", "custom_data")
         assert len(received) == 4
-        assert ("set_foo", "value1") in received
-        assert ("set_nested_path_value", "nested_value") in received
-        assert ("unset_foo", None) in received
+        assert (("set", "foo"), "value1") in received
+        assert (("set", "nested", "path", "value"), "nested_value") in received
+        assert (("unset", "foo"), None) in received
         assert ("custom", "custom_data") in received
 
     def test_wildcard_set_star(self):
@@ -142,15 +142,15 @@ class TestBase(unittest.TestCase):
         def listener(event, data):
             received.append((event, data))
 
-        config.subscribe("set_*", listener)
+        config.subscribe(("set", "*"), listener)
         config.set("foo", "value1")
         config.set("bar", "value2")
         config.set(["nested", "key"], "nested_value")
         config.unset("foo")
         assert len(received) == 3
-        assert ("set_foo", "value1") in received
-        assert ("set_bar", "value2") in received
-        assert ("set_nested_key", "nested_value") in received
+        assert (("set", "foo"), "value1") in received
+        assert (("set", "bar"), "value2") in received
+        assert (("set", "nested", "key"), "nested_value") in received
 
     def test_wildcard_unset_star(self):
         config = BaseConfig(self.app_name)
@@ -159,13 +159,13 @@ class TestBase(unittest.TestCase):
         def listener(event, data):
             received.append((event, data))
 
-        config.subscribe("unset_*", listener)
+        config.subscribe(("unset", "*"), listener)
         config.set("foo", "value")
         config.unset("foo")
         config.unset("bar")
         assert len(received) == 2
-        assert ("unset_foo", None) in received
-        assert ("unset_bar", None) in received
+        assert (("unset", "foo"), None) in received
+        assert (("unset", "bar"), None) in received
 
     def test_wildcard_key_ending(self):
         config = BaseConfig(self.app_name)
@@ -174,14 +174,14 @@ class TestBase(unittest.TestCase):
         def listener(event, data):
             received.append((event, data))
 
-        config.subscribe("*_foo", listener)
+        config.subscribe(("*", "foo"), listener)
         config.set("foo", "value1")
         config.set("bar", "value2")
         config.unset("foo")
         config.unset("bar")
-        assert len(received) == 2
-        assert ("set_foo", "value1") in received
-        assert ("unset_foo", None) in received
+        assert len(received) == 2, received
+        assert (("set", "foo"), "value1") in received
+        assert (("unset", "foo"), None) in received
 
     def test_multiple_wildcards_deduplication(self):
         config = BaseConfig(self.app_name)
@@ -190,11 +190,11 @@ class TestBase(unittest.TestCase):
         def listener(event, data):
             received.append((event, data))
 
-        config.subscribe("set_foo", listener)
-        config.subscribe("set_*", listener)
+        config.subscribe(("set", "foo"), listener)
+        config.subscribe(("set", "*"), listener)
         config.subscribe("*", listener)
         config.set("foo", "value")
-        assert received == [("set_foo", "value")]
+        assert received == [(("set", "foo"), "value")]
 
     def test_publishing_with_no_subscribers_raises_no_errors(self):
         config = BaseConfig(self.app_name)
@@ -262,13 +262,13 @@ class TestBase(unittest.TestCase):
         def listener(event, data):
             received.append((event, data))
 
-        config.subscribe("set_foo", listener)
+        config.subscribe(("set", "foo"), listener)
         config.set("foo", "string_value")
         config.set("bar", 42)
         config.set("baz", True)
         config.set("qux", 3.14)
         assert len(received) == 1
-        assert received == [("set_foo", "string_value")]
+        assert received == [(("set", "foo"), "string_value")]
 
     def test_list_key_single_element(self):
         config = BaseConfig(self.app_name)
