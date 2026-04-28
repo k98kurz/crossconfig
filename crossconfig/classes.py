@@ -39,25 +39,38 @@ class ConfigProtocol(Protocol):
         ...
 
     def get(
-            self, key: str|list[str], default: bool|str|int|float|list|dict|None = None
+            self, key: str|list[str],
+            default: bool|str|int|float|list|dict|None = None
         ) -> bool|str|int|float|list|dict|None:
         """Returns the value of a setting or the default value if the
-            setting does not exist.
+            setting does not exist. For nested access, pass a list of
+            key parts (e.g., ["parent", "child"]) to traverse nested
+            dicts; returns default if any path element is missing.
         """
         ...
 
     def set(self, key: str|list[str], value: bool|str|int|float|list|dict) -> None:
-        """Updates the value of a setting."""
+        """Updates the value of a setting. For nested access, pass a
+            list of key parts (e.g., ["parent", "child"], value) to
+            set values in nested dicts. Intermediate dicts are created
+            automatically. Triggers 'set_{key}' event with '_' joined
+            list keys (e.g., 'set_parent_child').
+        """
         ...
 
-    def unset(self, key: str) -> None:
-        """Removes a setting."""
+    def unset(self, key: str|list[str]) -> None:
+        """Removes a setting. For nested values, pass a list of key parts
+            (e.g., ["parent", "child"]). Always publishes unset event
+            even if the path does not exist.
+        """
         ...
 
     def subscribe(self, event: str, listener: Callable[[str, Any], None]) -> None:
-        """Adds a subscription to the event. Available events published
-            automatically are `set_{key}` and `unset_{key}`. The
-            listener will be called with the event name and data.
+        """Adds a subscription to the event. Automatic events include
+            'set_{key}' and 'unset_{key}' for config changes. List keys
+            generate events with parts joined by '_' (e.g., 'set_a_b_c').
+            Wildcards: '*_{key}', 'set_*', 'unset_*', and '*' (all).
+            The listener receives (event_name, data).
         """
         ...
 
@@ -68,7 +81,11 @@ class ConfigProtocol(Protocol):
         ...
 
     def publish(self, event: str, data: Any) -> None:
-        """Publishes an event to the subscribers."""
+        """Publishes an event to the subscribers. Fires exact matches,
+            wildcards (*_{key}, set_*, unset_*, *), and deduplicates
+            listeners before calling them. Exceptions raised by
+            listeners are suppressed.
+        """
         ...
 
 
@@ -131,10 +148,13 @@ class BaseConfig(ABC):
         return list(self.settings.keys())
 
     def get(
-            self, key: str|list[str], default: bool|str|int|float|list|dict|None=None
+            self, key: str|list[str],
+            default: bool|str|int|float|list|dict|None = None
         ) -> bool|str|int|float|list|dict|None:
         """Returns the value of a setting or the default value if the
-            setting does not exist.
+            setting does not exist. For nested access, pass a list of
+            key parts (e.g., ["parent", "child"]) to traverse nested
+            dicts; returns default if any path element is missing.
         """
         if isinstance(key, str):
             return self.settings.get(key, default)
@@ -146,7 +166,12 @@ class BaseConfig(ABC):
         return current
 
     def set(self, key: str|list[str], value: bool|str|int|float|list|dict) -> None:
-        """Updates the value of a setting."""
+        """Updates the value of a setting. For nested access, pass a
+            list of key parts (e.g., ["parent", "child"], value) to
+            set values in nested dicts. Intermediate dicts are created
+            automatically. Triggers 'set_{key}' event with '_' joined
+            list keys (e.g., 'set_parent_child').
+        """
         if isinstance(key, str):
             self.settings[key] = value
             self.publish(f"set_{key}", value)
@@ -159,15 +184,36 @@ class BaseConfig(ABC):
             current[key[-1]] = value
             self.publish(f"set_{'_'.join(key)}", value)
 
-    def unset(self, key: str) -> None:
-        """Removes a setting."""
-        self.settings.pop(key, None)
-        self.publish(f"unset_{key}", None)
+    def unset(self, key: str|list[str]) -> None:
+        """Removes a setting. For nested values, pass a list of key parts
+            (e.g., ["parent", "child"]). Always publishes unset event
+            even if the path does not exist.
+        """
+        if isinstance(key, str):
+            self.settings.pop(key, None)
+            self.publish(f"unset_{key}", None)
+        else:
+            if not key:
+                return
+
+            current = self.settings
+            for part in key[:-1]:
+                if not isinstance(current, dict):
+                    current = None
+                    break
+                current = current.get(part)
+
+            if isinstance(current, dict) and key[-1] in current:
+                del current[key[-1]]
+
+            self.publish(f"unset_{'_'.join(key)}", None)
 
     def subscribe(self, event: str, listener: Callable[[str, Any], None]) -> None:
-        """Adds a subscription to the event. Available events published
-            automatically are `set_{key}` and `unset_{key}`. The
-            listener will be called with the event name and data.
+        """Adds a subscription to the event. Automatic events include
+            'set_{key}' and 'unset_{key}' for config changes. List keys
+            generate events with parts joined by '_' (e.g., 'set_a_b_c').
+            Wildcards: '*_{key}', 'set_*', 'unset_*', and '*' (all).
+            The listener receives (event_name, data).
         """
         if event not in self._subscriptions:
             self._subscriptions[event] = []
@@ -186,7 +232,11 @@ class BaseConfig(ABC):
             ...
 
     def publish(self, event: str, data: Any) -> None:
-        """Publishes an event to the subscribers."""
+        """Publishes an event to the subscribers. Fires exact matches,
+            wildcards (*_{key}, set_*, unset_*, *), and deduplicates
+            listeners before calling them. Exceptions raised by
+            listeners are suppressed.
+        """
         listeners = []
         if event in self._subscriptions:
             listeners.extend(self._subscriptions[event])

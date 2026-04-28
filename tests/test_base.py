@@ -67,6 +67,31 @@ class TestBase(unittest.TestCase):
         config.unset("foo")
         assert received == [("unset_foo", None)]
 
+    def test_list_key_unset(self):
+        config = BaseConfig(self.app_name)
+        config.set(["parent", "child", "value"], 123)
+        assert config.get(["parent", "child", "value"]) == 123
+        config.unset(["parent", "child", "value"])
+        assert config.get(["parent", "child", "value"]) is None
+        assert isinstance(config.get("parent"), dict)
+        assert isinstance(config.get(["parent", "child"]), dict)
+
+    def test_unset_triggers_event_with_list_key(self):
+        config = BaseConfig(self.app_name)
+        received = []
+
+        def listener(event, data):
+            received.append((event, data))
+
+        config.subscribe("unset_*", listener)
+        config.set(["parent", "child"], "value")
+        received.clear()
+        config.unset(["parent", "child"])
+        assert received == [("unset_parent_child", None)]
+        received.clear()
+        config.unset(["nonexistent", "path"])
+        assert received == [("unset_nonexistent_path", None)]
+
     def test_unsubscribe_removes_listener(self):
         config = BaseConfig(self.app_name)
         received = []
