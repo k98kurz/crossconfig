@@ -17,6 +17,9 @@ class TestBase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
+        settings_path = f"base--{cls.app_name}/settings.json"
+        if os.path.exists(settings_path):
+            os.remove(settings_path)
         if os.path.exists(f"base--{cls.app_name}"):
             os.rmdir(f"base--{cls.app_name}")
         return super().tearDownClass()
@@ -309,6 +312,67 @@ class TestBase(unittest.TestCase):
         assert config.get(["path", "from", "value3"]) == 300
         assert config.settings["path"]["to"] == {"value1": 100, "value2": 200}
         assert config.settings["path"]["from"] == {"value3": 300}
+
+    def test_save_event_published(self):
+        config = BaseConfig(self.app_name)
+        received = []
+
+        def listener(event, data):
+            received.append((event, data))
+
+        config.subscribe("save", listener)
+        config.set("test", "value")
+        config.save()
+        assert received == [("save", None)]
+
+    def test_load_event_published_success(self):
+        config = BaseConfig(self.app_name)
+        received = []
+
+        def listener(event, data):
+            received.append((event, data))
+
+        config.set("test", "value")
+        config.save()
+        config2 = BaseConfig(self.app_name)
+        config2.subscribe("load", listener)
+        config2.load()
+        assert len(received) == 1
+        assert received[0][0] == "load"
+        assert received[0][1] == {"test": "value"}
+
+    def test_load_event_published_no_file(self):
+        config = BaseConfig(self.app_name)
+        received = []
+
+        def listener(event, data):
+            received.append((event, data))
+
+        settings_path = config.path("settings.json")
+        if os.path.exists(settings_path):
+            os.remove(settings_path)
+
+        config.subscribe("load", listener)
+        config.load()
+        assert received == [("load", {})]
+
+    def test_load_event_published_json_error(self):
+        config = BaseConfig(self.app_name)
+        received = []
+
+        def listener(event, data):
+            received.append((event, data))
+
+        import json
+        config.subscribe("load", listener)
+        settings_path = config.path("settings.json")
+        with open(settings_path, "w") as f:
+            f.write("invalid json {")
+        result = config.load()
+        assert len(received) == 1
+        assert received[0][0] == "load"
+        assert isinstance(received[0][1], json.decoder.JSONDecodeError)
+        assert result is received[0][1]
 
 
 if __name__ == "__main__":

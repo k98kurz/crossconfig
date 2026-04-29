@@ -27,11 +27,18 @@ class ConfigProtocol(Protocol):
         ...
 
     def load(self) -> None|json.decoder.JSONDecodeError:
-        """Loads the settings from the config folder."""
+        """Loads the settings from the config folder if it exists. This
+            does not produce an error if the file does not exist; it
+            will instead just load an empty settings dictionary.
+            Publishes 'load' event with data of `self.settings` or a
+            JSONDecodeError.
+        """
         ...
 
     def save(self) -> None:
-        """Saves the settings to the config folder."""
+        """Saves the settings to the config folder. Publishes 'save'
+            event with data of None.
+        """
         ...
 
     def list(self) -> list[str]:
@@ -53,15 +60,15 @@ class ConfigProtocol(Protocol):
         """Updates the value of a setting. For nested access, pass a
             list of key parts (e.g., ["parent", "child"], value) to
             set values in nested dicts. Intermediate dicts are created
-            automatically. Triggers 'set_{key}' event with '_' joined
-            list keys (e.g., 'set_parent_child').
+            automatically. Triggers ('set', *key) event, e.g.
+            ('set', 'parent', 'child').
         """
         ...
 
     def unset(self, key: str|list[str]) -> None:
         """Removes a setting. For nested values, pass a list of key parts
             (e.g., ["parent", "child"]). Always publishes unset event
-            even if the path does not exist.
+            of ('unset', *key) even if the path does not exist.
         """
         ...
 
@@ -70,22 +77,23 @@ class ConfigProtocol(Protocol):
             listener: Callable[[str|tuple[str], Any], None]
         ) -> None:
         """Adds a subscription to the event. Automatic events include
-            ('set', *key) and ('unset', *key) for config changes.
+            ('set', *key), ('unset', *key), 'save', and 'load'.
             Wildcards: ('*', *key), ('set', '*'), ('unset', '*'), and
             '*'/('*',) (all). The listener receives (event_key, data).
         """
         ...
 
     def unsubscribe(
-            self, event: tuple[str], listener: Callable[[str|tuple[str], Any], None]
+            self, event: str|tuple[str],
+            listener: Callable[[str|tuple[str], Any], None]
         ) -> None:
         """Removes a subscription to the event. Available events
-            published automatically are ('set', *key) and
-            ('unset', *key).
+            published automatically are 'save', 'load', ('set', *key),
+            and ('unset', *key).
         """
         ...
 
-    def publish(self, event: tuple[str], data: Any) -> None:
+    def publish(self, event: str|tuple[str], data: Any) -> None:
         """Publishes an event to the subscribers. Bubbles up from exact
             matches, through intermediate levels of a nested event, and
             wildcards (i.e. ('*', *key), ('set', '*'), ('unset', '*'),
@@ -131,6 +139,8 @@ class BaseConfig(ABC):
         """Loads the settings from the config folder if it exists. This
             does not produce an error if the file does not exist; it
             will instead just load an empty settings dictionary.
+            Publishes 'load' event with data of `self.settings` or a
+            JSONDecodeError.
         """
         settings_path = self.path("settings.json")
         if os.path.exists(settings_path):
@@ -138,17 +148,22 @@ class BaseConfig(ABC):
                 try:
                     self.settings = json.load(f)
                 except json.decoder.JSONDecodeError as e:
+                    self.publish('load', e)
                     return e
             if not isinstance(self.settings, dict):
                 self.settings = {}
         else:
             self.settings = {}
+        self.publish('load', self.settings)
 
     def save(self) -> None:
-        """Saves the settings to the config folder."""
+        """Saves the settings to the config folder. Publishes 'save'
+            event with data of None.
+        """
         settings_path = self.path("settings.json")
         with open(settings_path, "w") as f:
             json.dump(self.settings, f)
+        self.publish('save', None)
 
     def list(self) -> list[str]:
         """Returns a list of all setting keys (names)."""
@@ -176,8 +191,8 @@ class BaseConfig(ABC):
         """Updates the value of a setting. For nested access, pass a
             list of key parts (e.g., ["parent", "child"], value) to
             set values in nested dicts. Intermediate dicts are created
-            automatically. Triggers 'set_{key}' event with '_' joined
-            list keys (e.g., 'set_parent_child').
+            automatically. Triggers ('set', *key) event, e.g.
+            ('set', 'parent', 'child').
         """
         if isinstance(key, str):
             self.settings[key] = value
@@ -194,7 +209,7 @@ class BaseConfig(ABC):
     def unset(self, key: str|list[str]) -> None:
         """Removes a setting. For nested values, pass a list of key parts
             (e.g., ["parent", "child"]). Always publishes unset event
-            even if the path does not exist.
+            of ('unset', *key) even if the path does not exist.
         """
         if isinstance(key, str):
             self.settings.pop(key, None)
@@ -220,7 +235,7 @@ class BaseConfig(ABC):
             listener: Callable[[str|tuple[str], Any], None]
         ) -> None:
         """Adds a subscription to the event. Automatic events include
-            ('set', *key) and ('unset', *key) for config changes.
+            ('set', *key), ('unset', *key), 'save', and 'load'.
             Wildcards: ('*', *key), ('set', '*'), ('unset', '*'), and
             '*'/('*',) (all). The listener receives (event_key, data).
         """
@@ -240,8 +255,8 @@ class BaseConfig(ABC):
             listener: Callable[[str|tuple[str], Any], None]
         ) -> None:
         """Removes a subscription to the event. Available events
-            published automatically are ('set', *key) and
-            ('unset', *key).
+            published automatically are 'save', 'load', ('set', *key),
+            and ('unset', *key).
         """
         type_assert(type(event) in (str, tuple), 'event must be str|tuple[str]')
         if type(event) is tuple:
