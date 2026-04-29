@@ -27,3 +27,15 @@ classifiers = [
 
 [project.scripts]
 crossconfig = "crossconfig.cli:main"
+
+[tool.hatch.build.targets.wheel]
+exclude = [
+  "/tests",
+  "AGENTS.md",
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/tests",
+  "AGENTS.md",
+]
