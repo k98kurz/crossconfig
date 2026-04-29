@@ -5,19 +5,24 @@
   - Example: `config.set(["parent", "child"], value)`
   - Intermediate dicts created automatically on `set()`
 - Extended supported value types to include `list` and `dict`
-- Updated type annotations to use Python 3.10+ syntax (`list`/`dict` instead of `typing.List`/`Dict`)
 - Migrated event system from string-based to tuple-based event keys
   - Automatic events now use tuple format: `('set', *key)` and `('unset', *key)`
   - Example: `config.set(["parent", "child"], value)` publishes `('set', 'parent', 'child')`
   - Hierarchical wildcard support: `('*', 'parent')` matches all events under 'parent'
   - Backward compatibility maintained for custom string events
 - Added `load` and `save` events for file operations
-  - `load` publishes `('load', settings)` on success, `('load', error)` on JSON decode error
+  - `load` publishes `('load', settings)` on success, `('load', error)` on JSON
+   decode error
   - `save` publishes `('save', None)` after writing to file
 - Event delivery now maintains execution order with deduplication
-  - Listeners called from most specific to least specific (exact match → parent levels → wildcards)
+  - Listeners called from most specific to least specific (exact match → parent
+    levels → wildcards)
   - Events bubble to all parent listeners in hierarchy
-- Updated docstrings for event methods and expanded test coverage to 38 tests
+- Custom hierarchical events now support bubbling to parent levels
+  - Subscribe to `('do', 'something')` to receive `('do', 'something')`,
+    `('do', 'something', 'more')`, etc.
+  - Wildcards work with custom events: `('*', 'something')` matches any first
+    element with 'something' as second
 
 ## 0.0.4
 

@@ -77,7 +77,8 @@ class ConfigProtocol(Protocol):
             listener: Callable[[str|tuple[str], Any], None]
         ) -> None:
         """Adds a subscription to the event. Automatic events include
-            ('set', *key), ('unset', *key), 'save', and 'load'.
+            ('set', *key), ('unset', *key), 'save', and 'load'. Custom
+            hierarchical events are supported and bubble properly.
             Wildcards: ('*', *key), ('set', '*'), ('unset', '*'), and
             '*'/('*',) (all). The listener receives (event_key, data).
         """
@@ -95,11 +96,13 @@ class ConfigProtocol(Protocol):
 
     def publish(self, event: str|tuple[str], data: Any) -> None:
         """Publishes an event to the subscribers. Bubbles up from exact
-            matches through parent levels and wildcards (i.e. ('*', *key),
-            ('set', '*'), ('unset', '*'), ('*',)). Nested events notify
-            all parent listeners (e.g., set(['a', 'b']) reaches ('set', 'a')).
-            Deduplicates listeners to avoid calling the same listener more
-            than once. Exceptions raised by listeners are suppressed.
+            matches through parent levels and wildcards (i.e.
+            ('*', *key), ('set', '*'), ('unset', '*'), ('*',)). Nested
+            events notify all parent listeners (e.g., set(['a', 'b'])
+            reaches ('set', 'a') and ('do', 'foo', 'bar') reaches
+            ('*', 'foo')). Deduplicates listeners to avoid calling the
+            same listener more than once. Exceptions raised by listeners
+            are suppressed.
         """
         ...
 
@@ -235,7 +238,8 @@ class BaseConfig(ABC):
             listener: Callable[[str|tuple[str], Any], None]
         ) -> None:
         """Adds a subscription to the event. Automatic events include
-            ('set', *key), ('unset', *key), 'save', and 'load'.
+            ('set', *key), ('unset', *key), 'save', and 'load'. Custom
+            hierarchical events are supported and bubble properly.
             Wildcards: ('*', *key), ('set', '*'), ('unset', '*'), and
             '*'/('*',) (all). The listener receives (event_key, data).
         """
@@ -273,11 +277,13 @@ class BaseConfig(ABC):
 
     def publish(self, event: str|tuple[str], data: Any) -> None:
         """Publishes an event to the subscribers. Bubbles up from exact
-            matches through parent levels and wildcards (i.e. ('*', *key),
-            ('set', '*'), ('unset', '*'), ('*',)). Nested events notify
-            all parent listeners (e.g., set(['a', 'b']) reaches ('set', 'a')).
-            Deduplicates listeners to avoid calling the same listener more
-            than once. Exceptions raised by listeners are suppressed.
+            matches through parent levels and wildcards (i.e.
+            ('*', *key), ('set', '*'), ('unset', '*'), ('*',)). Nested
+            events notify all parent listeners (e.g., set(['a', 'b'])
+            reaches ('set', 'a') and ('do', 'foo', 'bar') reaches
+            ('*', 'foo')). Deduplicates listeners to avoid calling the
+            same listener more than once. Exceptions raised by listeners
+            are suppressed.
         """
         type_assert(type(event) in (str, tuple), 'event must be str|tuple[str]')
         if type(event) is tuple:

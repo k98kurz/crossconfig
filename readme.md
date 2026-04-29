@@ -178,7 +178,7 @@ config.set("database", {"host": "localhost"})  # DB: ('set', 'database')
 </details>
 
 <details>
-<summary>Manual Event Publishing & Unsubscribing</summary>
+<summary>Custom Event Publishing & Unsubscribing</summary>
 
 You can publish custom events and remove subscriptions:
 
@@ -190,11 +190,19 @@ listener = lambda e, d: print(f"Event: {e}, Data: {d}")
 # Subscribe to a custom event or event family
 config.subscribe("custom_event", listener)
 config.subscribe(("custom_event",), listener)
+config.subscribe(("*", "scope"), listener)
 
 # Publish a custom event
 config.publish("custom_event", {"message": "hello"})
 # Prints: Event: custom_event, Data: {'message': 'hello'}
-config.publish(("custom_event", "something"), {"message": "hello"})
+
+# Hiearchical events work with the ("custom_event",) subscription
+config.publish(("custom_event", "something"), "secret message")
+# Prints: Event: ('custom_event', 'something'), Data: secret message
+
+# Wildstar ("*", "scope") listener also works hierarchically
+config.publish(("verb", "scope", "thing"), 123)
+# Prints: Event: ('verb', 'scope', 'thing'), Data: 123
 
 # Unsubscribe the listener
 config.unsubscribe("custom_event", listener)

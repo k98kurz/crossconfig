@@ -60,8 +60,9 @@ not exist.
 ##### `subscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
 Adds a subscription to the event. Automatic events include ('set', *key),
-('unset', *key), 'save', and 'load'. Wildcards: ('*', *key), ('set', '*'),
-('unset', '*'), and '*'/('*',) (all). The listener receives (event_key, data).
+('unset', *key), 'save', and 'load'. Custom hierarchical events are supported
+and bubble properly. Wildcards: ('*', *key), ('set', '*'), ('unset', '*'), and
+'*'/('*',) (all). The listener receives (event_key, data).
 
 ##### `unsubscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
@@ -73,8 +74,9 @@ are 'save', 'load', ('set', *key), and ('unset', *key).
 Publishes an event to the subscribers. Bubbles up from exact matches through
 parent levels and wildcards (i.e. ('*', *key), ('set', '*'), ('unset', '*'),
 ('*',)). Nested events notify all parent listeners (e.g., set(['a', 'b'])
-reaches ('set', 'a')). Deduplicates listeners to avoid calling the same listener
-more than once. Exceptions raised by listeners are suppressed.
+reaches ('set', 'a') and ('do', 'foo', 'bar') reaches ('*', 'foo')).
+Deduplicates listeners to avoid calling the same listener more than once.
+Exceptions raised by listeners are suppressed.
 
 ### `BaseConfig(ABC)`
 
@@ -141,8 +143,9 @@ not exist.
 ##### `subscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
 Adds a subscription to the event. Automatic events include ('set', *key),
-('unset', *key), 'save', and 'load'. Wildcards: ('*', *key), ('set', '*'),
-('unset', '*'), and '*'/('*',) (all). The listener receives (event_key, data).
+('unset', *key), 'save', and 'load'. Custom hierarchical events are supported
+and bubble properly. Wildcards: ('*', *key), ('set', '*'), ('unset', '*'), and
+'*'/('*',) (all). The listener receives (event_key, data).
 
 ##### `unsubscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
@@ -154,8 +157,9 @@ are 'save', 'load', ('set', *key), and ('unset', *key).
 Publishes an event to the subscribers. Bubbles up from exact matches through
 parent levels and wildcards (i.e. ('*', *key), ('set', '*'), ('unset', '*'),
 ('*',)). Nested events notify all parent listeners (e.g., set(['a', 'b'])
-reaches ('set', 'a')). Deduplicates listeners to avoid calling the same listener
-more than once. Exceptions raised by listeners are suppressed.
+reaches ('set', 'a') and ('do', 'foo', 'bar') reaches ('*', 'foo')).
+Deduplicates listeners to avoid calling the same listener more than once.
+Exceptions raised by listeners are suppressed.
 
 ### `WindowsConfig(BaseConfig)`
 
