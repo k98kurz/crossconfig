@@ -287,12 +287,17 @@ class BaseConfig(ABC):
         listeners = []
         listeners.extend(self._subscriptions.get(event, []))
 
-        if event[0] in ('set', 'unset'):
-            key = event[1:]
+        if type(event) is tuple:
             # bubble up the event from deepest to shallowest listeners
+            for i in range(len(event), -1, -1):
+                listeners.extend(self._subscriptions.get(event[:i], []))
+
+            # handle root wildcards, e.g. ('*', 'thing')
+            key = event[1:]
             for i in range(len(key), -1, -1):
-                listeners.extend(self._subscriptions.get((event[0], *key[:i]), []))
                 listeners.extend(self._subscriptions.get(('*', *key[:i]), []))
+
+            # handle ('set', '*'), ('unset', '*'), etc
             listeners.extend(self._subscriptions.get((event[0], '*'), []))
 
         listeners.extend(self._subscriptions.get('*', []))

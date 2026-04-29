@@ -374,6 +374,42 @@ class TestBase(unittest.TestCase):
         assert isinstance(received[0][1], json.decoder.JSONDecodeError), received[0][1]
         assert result is received[0][1], result
 
+    def test_custom_event_bubbling(self):
+        config = BaseConfig(self.app_name)
+        received = []
+
+        def listener(event, data):
+            received.append((event, data))
+
+        config.subscribe(("do", "something"), listener)
+        config.publish(("do", "something"), "exact")
+        config.publish(("do", "something", "more"), "child")
+        config.publish(("do", "something", "ad", "nauseum"), "deep_child")
+        assert len(received) == 3, len(received)
+        assert received[0] == (("do", "something"), "exact"), received[0]
+        assert received[1] == (("do", "something", "more"), "child"), received[1]
+        assert received[2] == (
+            ("do", "something", "ad", "nauseum"), "deep_child"
+        ), received[2]
+
+    def test_custom_event_wildcard(self):
+        config = BaseConfig(self.app_name)
+        received = []
+
+        def listener(event, data):
+            received.append((event, data))
+
+        config.subscribe(("*", "something"), listener)
+        config.publish(("do", "something"), "data1")
+        config.publish(("do_not", "something"), "data2")
+        config.publish(("whatever", "something", "child", "grandchild"), "data3")
+        assert len(received) == 3, len(received)
+        assert received[0] == (("do", "something"), "data1"), received[0]
+        assert received[1] == (("do_not", "something"), "data2"), received[1]
+        assert received[2] == (
+            ("whatever", "something", "child", "grandchild"), "data3"
+        ), received[2]
+
 
 if __name__ == "__main__":
     unittest.main()
