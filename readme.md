@@ -46,6 +46,9 @@ subdir_path = config.path("subdir")
 # set a setting
 config.set("my_setting", "my_value")
 
+# set a nested setting
+config.set(["section", "key"], "nested_value")
+
 # save and reload the config
 config.save()
 [config.unset(key) for key in config.list()]
@@ -63,15 +66,42 @@ config.save()
 ```
 </details>
 
+### Nested Access with List Keys
+
+For hierarchical settings, use a list of key parts instead of a string:
+
+```python
+from crossconfig import get_config
+
+config = get_config("my_app")
+config.load()
+
+# Set nested values (creates intermediate dicts automatically)
+config.set(["database", "host"], "localhost")
+config.set(["database", "port"], 5432)
+config.set(["ui", "theme", "dark"], True)
+
+# Get nested values
+assert config.get(["database", "host"]) == "localhost"
+assert config.get(["ui", "theme"]) == {"dark": True}
+
+# Missing paths return None (or your default)
+assert config.get(["missing", "path"], "default") == "default"
+```
+
+Values can be any JSON-compatible type: `bool`, `str`, `int`, `float`, `list`, or `dict`.
+
 ### Event Notifications
 
 The config object supports a publish/subscribe event system for reacting to
-configuration changes.
+configuration changes. Automatic events include the following: `('set', *key)`,
+`('unset', *key)`, `'save'`, and `'load'`.
 
 <details>
 <summary>Basic Event Subscription</summary>
 
-You can subscribe to automatic events that fire when settings are set or unset:
+You can subscribe to automatic events that fire when settings are set, unset,
+saved, or loaded:
 
 ```python
 from crossconfig import get_config
@@ -83,29 +113,40 @@ def on_setting_change(event, data):
     print(f"Event: {event}, Data: {data}")
 
 # Subscribe to a specific key being set/unset
-config.subscribe("set_theme", on_setting_change)
-config.subscribe("unset_theme", on_setting_change)
+config.subscribe(("set", "theme"), on_setting_change)
+config.subscribe(("unset", "theme"), on_setting_change)
 
 # Set/unset a setting - this will trigger the listener
-config.set("theme", "dark")  # Prints: Event: set_theme, Data: dark
-config.unset("theme")  # Prints: Event: unset_theme, Data: None
+config.set("theme", "dark")  # Prints: Event: ('set', 'theme'), Data: dark
+config.unset("theme")  # Prints: Event: ('unset', 'theme'), Data: None
+
+# Subscribe to file operation events
+config.subscribe("load", on_setting_change)
+config.subscribe("save", on_setting_change)
+
+# Save/load config - triggers the listener
+config.save()  # Event: save, Data: None
+config.load()  # Event: load, Data: {...settings...}
+
+# Unsubscribe from an event
+config.unsubscribe(("set", "theme"), on_setting_change)
 ```
 </details>
 
 <details>
 <summary>Wildcard Subscriptions</summary>
 
-Wildcard patterns let you subscribe to multiple events at once:
+Wildcards let you subscribe to multiple events at once:
 
 ```python
 config = get_config("my_app")
 
 # Subscribe to ALL set/unset events
-config.subscribe("set_*", lambda e, d: print(f"Setting changed: {e}"))
-config.subscribe("unset_*", lambda e, d: print(f"Setting removed: {e}"))
+config.subscribe(("set", "*"), lambda e, d: print(f"Setting changed: {e}"))
+config.subscribe(("unset", "*"), lambda e, d: print(f"Setting removed: {e}"))
 
 # Subscribe to ANY event on a specific key (set or unset)
-config.subscribe("*_theme", lambda e, d: print(f"Theme changed: {e}"))
+config.subscribe(("*", "theme"), lambda e, d: print(f"Theme changed: {e}, {d}"))
 
 # Subscribe to ALL events (wildcard of wildcards)
 config.subscribe("*", lambda e, d: print(f"Any event: {e}"))
@@ -113,6 +154,26 @@ config.subscribe("*", lambda e, d: print(f"Any event: {e}"))
 config.set("theme", "dark")
 config.set("language", "en")
 config.unset("theme")
+```
+</details>
+
+<details>
+<summary>Hierarchical Event Bubbling</summary>
+
+Nested events bubble to all parent listeners:
+
+```python
+config = get_config("my_app")
+
+# Listen to all changes under "database" section
+config.subscribe(("*", "database"), lambda e, d: print(f"DB: {e}"))
+
+# This fires the listener (nested under "database")
+config.set(["database", "host"], "localhost")  # DB: ('set', 'database', 'host')
+config.set(["database", "port"], 5432)  # DB: ('set', 'database', 'port')
+
+# This also fires the listener (direct change to "database")
+config.set("database", {"host": "localhost"})  # DB: ('set', 'database')
 ```
 </details>
 
@@ -126,12 +187,14 @@ config = get_config("my_app")
 
 listener = lambda e, d: print(f"Event: {e}, Data: {d}")
 
-# Subscribe to a custom event
+# Subscribe to a custom event or event family
 config.subscribe("custom_event", listener)
+config.subscribe(("custom_event",), listener)
 
 # Publish a custom event
 config.publish("custom_event", {"message": "hello"})
 # Prints: Event: custom_event, Data: {'message': 'hello'}
+config.publish(("custom_event", "something"), {"message": "hello"})
 
 # Unsubscribe the listener
 config.unsubscribe("custom_event", listener)
@@ -145,6 +208,9 @@ config.publish("custom_event", {"message": "hello again"})
 
 - The `load` method will return a JSON decode error if the config file is not
   valid JSON. If it loads successfully, it will return `None`.
+- The `load` method publishes a `'load'` event with the loaded settings or a
+  `JSONDecodeError` on failure.
+- The `save` method publishes a `'save'` event after writing to file.
 - There is no lock for multi-threaded access to the config object or file.
   Calling `save` or `load` in a multi-threaded environment may result in a race
   condition.
@@ -183,8 +249,10 @@ find tests/ -name test_*.py -print -exec python {} \;
 Testing suites are platform-specific, but the tests that should not run on a
 given platform will be skipped if their files are run.
 
-There are a total of 28 tests: 18 test of the base class methods; 5 tests for
+There are a total of 38 tests: 28 tests of the base class methods; 5 tests for
 POSIX systems; and 5 tests for Windows.
+
+(Platform-dependent test suites only run on the appropriate platforms.)
 
 ## License
 

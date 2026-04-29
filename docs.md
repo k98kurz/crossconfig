@@ -24,51 +24,66 @@ current platform.
 
 ##### `load() -> None | json.decoder.JSONDecodeError:`
 
-Loads the settings from the config folder.
+Loads the settings from the config folder if it exists. This does not produce an
+error if the file does not exist; it will instead just load an empty settings
+dictionary. Publishes 'load' event with data of `self.settings` or a
+JSONDecodeError.
 
-##### `save():`
+##### `save() -> None:`
 
-Saves the settings to the config folder.
+Saves the settings to the config folder. Publishes 'save' event with data of
+None.
 
 ##### `list() -> list[str]:`
 
 Returns a list of all setting keys (names).
 
-##### `get(key: str, default: bool | str | int | float | None = None) -> bool | str | int | float | None:`
+##### `get(key: str | list[str], default: bool | str | int | float | list | dict | None = None) -> bool | str | int | float | list | dict | None:`
 
 Returns the value of a setting or the default value if the setting does not
-exist.
+exist. For nested access, pass a list of key parts (e.g., ["parent", "child"])
+to traverse nested dicts; returns default if any path element is missing.
 
-##### `set(key: str, value: bool | str | int | float):`
+##### `set(key: str | list[str], value: bool | str | int | float | list | dict) -> None:`
 
-Updates the value of a setting.
+Updates the value of a setting. For nested access, pass a list of key parts
+(e.g., ["parent", "child"], value) to set values in nested dicts. Intermediate
+dicts are created automatically. Triggers ('set', *key) event, e.g. ('set',
+'parent', 'child').
 
-##### `unset(key: str):`
+##### `unset(key: str | list[str]) -> None:`
 
-Removes a setting.
+Removes a setting. For nested values, pass a list of key parts (e.g., ["parent",
+"child"]). Always publishes unset event of ('unset', *key) even if the path does
+not exist.
 
-##### `subscribe(event: str, listener: Callable):`
+##### `subscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
-Adds a subscription to the event. Available events published automatically are
-`set_{key}` and `unset_{key}`. The listener will be called with the event name
-and data.
+Adds a subscription to the event. Automatic events include ('set', *key),
+('unset', *key), 'save', and 'load'. Wildcards: ('*', *key), ('set', '*'),
+('unset', '*'), and '*'/('*',) (all). The listener receives (event_key, data).
 
-##### `unsubscribe(event: str, listener: Callable):`
+##### `unsubscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
 Removes a subscription to the event. Available events published automatically
-are `set_{key}` and `unset_{key}`.
+are 'save', 'load', ('set', *key), and ('unset', *key).
 
-##### `publish(event: str, data: Any):`
+##### `publish(event: str | tuple[str], data: Any) -> None:`
 
-Publishes an event to the subscribers.
+Publishes an event to the subscribers. Bubbles up from exact matches through
+parent levels and wildcards (i.e. ('*', *key), ('set', '*'), ('unset', '*'),
+('*',)). Nested events notify all parent listeners (e.g., set(['a', 'b'])
+reaches ('set', 'a')). Deduplicates listeners to avoid calling the same listener
+more than once. Exceptions raised by listeners are suppressed.
 
 ### `BaseConfig(ABC)`
 
 #### Annotations
 
-- app_name: <class 'str'>
-- settings: dict[str, bool | str | int | float]
-- _subscriptions: dict[str, list[typing.Callable[[str, typing.Any], NoneType]]]
+- app_name: str
+- settings: dict[str, bool | str | int | float | list | dict]
+- _subscriptions: dict[tuple[str], list[Callable[[str | tuple[str], Any],
+None]]]
 
 #### Methods
 
@@ -92,51 +107,64 @@ current platform.
 
 Loads the settings from the config folder if it exists. This does not produce an
 error if the file does not exist; it will instead just load an empty settings
-dictionary.
+dictionary. Publishes 'load' event with data of `self.settings` or a
+JSONDecodeError.
 
-##### `save():`
+##### `save() -> None:`
 
-Saves the settings to the config folder.
+Saves the settings to the config folder. Publishes 'save' event with data of
+None.
 
 ##### `list() -> list[str]:`
 
 Returns a list of all setting keys (names).
 
-##### `get(key: str, default: bool | str | int | float | None = None) -> bool | str | int | float | None:`
+##### `get(key: str | list[str], default: bool | str | int | float | list | dict | None = None) -> bool | str | int | float | list | dict | None:`
 
 Returns the value of a setting or the default value if the setting does not
-exist.
+exist. For nested access, pass a list of key parts (e.g., ["parent", "child"])
+to traverse nested dicts; returns default if any path element is missing.
 
-##### `set(key: str, value: bool | str | int | float):`
+##### `set(key: str | list[str], value: bool | str | int | float | list | dict) -> None:`
 
-Updates the value of a setting.
+Updates the value of a setting. For nested access, pass a list of key parts
+(e.g., ["parent", "child"], value) to set values in nested dicts. Intermediate
+dicts are created automatically. Triggers ('set', *key) event, e.g. ('set',
+'parent', 'child').
 
-##### `unset(key: str):`
+##### `unset(key: str | list[str]) -> None:`
 
-Removes a setting.
+Removes a setting. For nested values, pass a list of key parts (e.g., ["parent",
+"child"]). Always publishes unset event of ('unset', *key) even if the path does
+not exist.
 
-##### `subscribe(event: str, listener: Callable):`
+##### `subscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
-Adds a subscription to the event. Available events published automatically are
-`set_{key}` and `unset_{key}`. The listener will be called with the event name
-and data.
+Adds a subscription to the event. Automatic events include ('set', *key),
+('unset', *key), 'save', and 'load'. Wildcards: ('*', *key), ('set', '*'),
+('unset', '*'), and '*'/('*',) (all). The listener receives (event_key, data).
 
-##### `unsubscribe(event: str, listener: Callable):`
+##### `unsubscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
 Removes a subscription to the event. Available events published automatically
-are `set_{key}` and `unset_{key}`.
+are 'save', 'load', ('set', *key), and ('unset', *key).
 
-##### `publish(event: str, data: Any):`
+##### `publish(event: str | tuple[str], data: Any) -> None:`
 
-Publishes an event to the subscribers.
+Publishes an event to the subscribers. Bubbles up from exact matches through
+parent levels and wildcards (i.e. ('*', *key), ('set', '*'), ('unset', '*'),
+('*',)). Nested events notify all parent listeners (e.g., set(['a', 'b'])
+reaches ('set', 'a')). Deduplicates listeners to avoid calling the same listener
+more than once. Exceptions raised by listeners are suppressed.
 
 ### `WindowsConfig(BaseConfig)`
 
 #### Annotations
 
-- app_name: <class 'str'>
-- settings: dict[str, bool | str | int | float]
-- _subscriptions: dict[str, list[typing.Callable[[str, typing.Any], NoneType]]]
+- app_name: str
+- settings: dict[str, bool | str | int | float | list | dict]
+- _subscriptions: dict[tuple[str], list[Callable[[str | tuple[str], Any],
+None]]]
 
 #### Methods
 
@@ -153,9 +181,10 @@ current user in Windows, and it is scoped to the app name.
 
 #### Annotations
 
-- app_name: <class 'str'>
-- settings: dict[str, bool | str | int | float]
-- _subscriptions: dict[str, list[typing.Callable[[str, typing.Any], NoneType]]]
+- app_name: str
+- settings: dict[str, bool | str | int | float | list | dict]
+- _subscriptions: dict[tuple[str], list[Callable[[str | tuple[str], Any],
+None]]]
 
 #### Methods
 
@@ -172,9 +201,10 @@ current user in Posix, and it is scoped to the app name.
 
 #### Annotations
 
-- app_name: <class 'str'>
-- settings: dict[str, bool | str | int | float]
-- _subscriptions: dict[str, list[typing.Callable[[str, typing.Any], NoneType]]]
+- app_name: str
+- settings: dict[str, bool | str | int | float | list | dict]
+- _subscriptions: dict[tuple[str], list[Callable[[str | tuple[str], Any],
+None]]]
 
 #### Methods
 

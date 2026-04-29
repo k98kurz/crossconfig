@@ -1,3 +1,24 @@
+## 0.0.5
+
+- Added list key syntax for nested configuration access
+  - `get()` and `set()` now accept `list[str]` keys for hierarchical access
+  - Example: `config.set(["parent", "child"], value)`
+  - Intermediate dicts created automatically on `set()`
+- Extended supported value types to include `list` and `dict`
+- Updated type annotations to use Python 3.10+ syntax (`list`/`dict` instead of `typing.List`/`Dict`)
+- Migrated event system from string-based to tuple-based event keys
+  - Automatic events now use tuple format: `('set', *key)` and `('unset', *key)`
+  - Example: `config.set(["parent", "child"], value)` publishes `('set', 'parent', 'child')`
+  - Hierarchical wildcard support: `('*', 'parent')` matches all events under 'parent'
+  - Backward compatibility maintained for custom string events
+- Added `load` and `save` events for file operations
+  - `load` publishes `('load', settings)` on success, `('load', error)` on JSON decode error
+  - `save` publishes `('save', None)` after writing to file
+- Event delivery now maintains execution order with deduplication
+  - Listeners called from most specific to least specific (exact match → parent levels → wildcards)
+  - Events bubble to all parent listeners in hierarchy
+- Updated docstrings for event methods and expanded test coverage to 38 tests
+
 ## 0.0.4
 
 - Added publish/subscribe event system for configuration changes
