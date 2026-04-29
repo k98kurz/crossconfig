@@ -48,35 +48,34 @@ to traverse nested dicts; returns default if any path element is missing.
 
 Updates the value of a setting. For nested access, pass a list of key parts
 (e.g., ["parent", "child"], value) to set values in nested dicts. Intermediate
-dicts are created automatically. Triggers ('set', *key) event, e.g. ('set',
-'parent', 'child').
+dicts are created automatically. Triggers `('set', *key)` event, e.g. `('set',
+'parent', 'child')`.
 
 ##### `unset(key: str | list[str]) -> None:`
 
 Removes a setting. For nested values, pass a list of key parts (e.g., ["parent",
-"child"]). Always publishes unset event of ('unset', *key) even if the path does
-not exist.
+"child"]). Always publishes unset event of `('unset', *key)` even if the path
+does not exist.
 
 ##### `subscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
-Adds a subscription to the event. Automatic events include ('set', *key),
-('unset', *key), 'save', and 'load'. Custom hierarchical events are supported
-and bubble properly. Wildcards: ('*', *key), ('set', '*'), ('unset', '*'), and
-'*'/('*',) (all). The listener receives (event_key, data).
+Adds a subscription to the event. Automatic events include `('set', *key)`,
+`('unset', *key)`, 'save', and 'load'. Custom hierarchical events are supported
+and bubble properly. Wildcards: `('*', *key)`, `('set', '*')`, `('unset', '*')`,
+and `'*'`/`('*',)` (all). The listener receives `(event_key, data)`.
 
 ##### `unsubscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
 Removes a subscription to the event. Available events published automatically
-are 'save', 'load', ('set', *key), and ('unset', *key).
+are 'save', 'load', `('set', *key)`, and `('unset', *key)`.
 
 ##### `publish(event: str | tuple[str], data: Any) -> None:`
 
 Publishes an event to the subscribers. Bubbles up from exact matches through
-parent levels and wildcards (i.e. ('*', *key), ('set', '*'), ('unset', '*'),
-('*',)). Nested events notify all parent listeners (e.g., set(['a', 'b'])
-reaches ('set', 'a') and ('do', 'foo', 'bar') reaches ('*', 'foo')).
-Deduplicates listeners to avoid calling the same listener more than once.
-Exceptions raised by listeners are suppressed.
+parent levels and wildcards (i.e. `('*', *key)`, `('set', '*')`, `('unset',
+'*')`, `('*',)`). Nested events notify all parent listeners (e.g., `set(['a',
+'b'])` reaches `('set', 'a'`) and `('do', 'foo', 'bar')` reaches `('*',
+'foo')`). Deduplicates listeners to avoid calling the same listener more than once. Exceptions raised by listeners are suppressed.
 
 ### `BaseConfig(ABC)`
 
@@ -131,35 +130,34 @@ to traverse nested dicts; returns default if any path element is missing.
 
 Updates the value of a setting. For nested access, pass a list of key parts
 (e.g., ["parent", "child"], value) to set values in nested dicts. Intermediate
-dicts are created automatically. Triggers ('set', *key) event, e.g. ('set',
-'parent', 'child').
+dicts are created automatically. Triggers `('set', *key)` event, e.g. `('set',
+'parent', 'child')`.
 
 ##### `unset(key: str | list[str]) -> None:`
 
 Removes a setting. For nested values, pass a list of key parts (e.g., ["parent",
-"child"]). Always publishes unset event of ('unset', *key) even if the path does
-not exist.
+"child"]). Always publishes unset event of `('unset', *key)` even if the path
+does not exist.
 
 ##### `subscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
-Adds a subscription to the event. Automatic events include ('set', *key),
-('unset', *key), 'save', and 'load'. Custom hierarchical events are supported
-and bubble properly. Wildcards: ('*', *key), ('set', '*'), ('unset', '*'), and
-'*'/('*',) (all). The listener receives (event_key, data).
+Adds a subscription to the event. Automatic events include `('set', *key)`,
+`('unset', *key)`, 'save', and 'load'. Custom hierarchical events are supported
+and bubble properly. Wildcards: `('*', *key)`, `('set', '*')`, `('unset', '*')`,
+and `'*'`/`('*',)` (all). The listener receives `(event_key, data)`.
 
 ##### `unsubscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
 Removes a subscription to the event. Available events published automatically
-are 'save', 'load', ('set', *key), and ('unset', *key).
+are 'save', 'load', `('set', *key)`, and `('unset', *key)`.
 
 ##### `publish(event: str | tuple[str], data: Any) -> None:`
 
 Publishes an event to the subscribers. Bubbles up from exact matches through
-parent levels and wildcards (i.e. ('*', *key), ('set', '*'), ('unset', '*'),
-('*',)). Nested events notify all parent listeners (e.g., set(['a', 'b'])
-reaches ('set', 'a') and ('do', 'foo', 'bar') reaches ('*', 'foo')).
-Deduplicates listeners to avoid calling the same listener more than once.
-Exceptions raised by listeners are suppressed.
+parent levels and wildcards (i.e. `('*', *key)`, `('set', '*')`, `('unset',
+'*')`, `('*',)`). Nested events notify all parent listeners (e.g., `set(['a',
+'b'])` reaches `('set', 'a'`) and `('do', 'foo', 'bar')` reaches `('*',
+'foo')`). Deduplicates listeners to avoid calling the same listener more than once. Exceptions raised by listeners are suppressed.
 
 ### `WindowsConfig(BaseConfig)`
 

@@ -60,15 +60,15 @@ class ConfigProtocol(Protocol):
         """Updates the value of a setting. For nested access, pass a
             list of key parts (e.g., ["parent", "child"], value) to
             set values in nested dicts. Intermediate dicts are created
-            automatically. Triggers ('set', *key) event, e.g.
-            ('set', 'parent', 'child').
+            automatically. Triggers `('set', *key)` event, e.g.
+            `('set', 'parent', 'child')`.
         """
         ...
 
     def unset(self, key: str|list[str]) -> None:
         """Removes a setting. For nested values, pass a list of key parts
             (e.g., ["parent", "child"]). Always publishes unset event
-            of ('unset', *key) even if the path does not exist.
+            of `('unset', *key)` even if the path does not exist.
         """
         ...
 
@@ -77,10 +77,11 @@ class ConfigProtocol(Protocol):
             listener: Callable[[str|tuple[str], Any], None]
         ) -> None:
         """Adds a subscription to the event. Automatic events include
-            ('set', *key), ('unset', *key), 'save', and 'load'. Custom
-            hierarchical events are supported and bubble properly.
-            Wildcards: ('*', *key), ('set', '*'), ('unset', '*'), and
-            '*'/('*',) (all). The listener receives (event_key, data).
+            `('set', *key)`, `('unset', *key)`, 'save', and 'load'.
+            Custom hierarchical events are supported and bubble properly.
+            Wildcards: `('*', *key)`, `('set', '*')`, `('unset', '*')`,
+            and `'*'`/`('*',)` (all). The listener receives
+            `(event_key, data)`.
         """
         ...
 
@@ -89,18 +90,19 @@ class ConfigProtocol(Protocol):
             listener: Callable[[str|tuple[str], Any], None]
         ) -> None:
         """Removes a subscription to the event. Available events
-            published automatically are 'save', 'load', ('set', *key),
-            and ('unset', *key).
+            published automatically are 'save', 'load', `('set', *key)`,
+            and `('unset', *key)`.
         """
         ...
 
     def publish(self, event: str|tuple[str], data: Any) -> None:
         """Publishes an event to the subscribers. Bubbles up from exact
             matches through parent levels and wildcards (i.e.
-            ('*', *key), ('set', '*'), ('unset', '*'), ('*',)). Nested
-            events notify all parent listeners (e.g., set(['a', 'b'])
-            reaches ('set', 'a') and ('do', 'foo', 'bar') reaches
-            ('*', 'foo')). Deduplicates listeners to avoid calling the
+            `('*', *key)`, `('set', '*')`, `('unset', '*')`, `('*',)`).
+            Nested events notify all parent listeners (e.g.,
+            `set(['a', 'b'])` reaches `('set', 'a'`) and
+            `('do', 'foo', 'bar')` reaches
+            `('*', 'foo')`). Deduplicates listeners to avoid calling the
             same listener more than once. Exceptions raised by listeners
             are suppressed.
         """
@@ -194,8 +196,8 @@ class BaseConfig(ABC):
         """Updates the value of a setting. For nested access, pass a
             list of key parts (e.g., ["parent", "child"], value) to
             set values in nested dicts. Intermediate dicts are created
-            automatically. Triggers ('set', *key) event, e.g.
-            ('set', 'parent', 'child').
+            automatically. Triggers `('set', *key)` event, e.g.
+            `('set', 'parent', 'child')`.
         """
         if isinstance(key, str):
             self.settings[key] = value
@@ -212,7 +214,7 @@ class BaseConfig(ABC):
     def unset(self, key: str|list[str]) -> None:
         """Removes a setting. For nested values, pass a list of key parts
             (e.g., ["parent", "child"]). Always publishes unset event
-            of ('unset', *key) even if the path does not exist.
+            of `('unset', *key)` even if the path does not exist.
         """
         if isinstance(key, str):
             self.settings.pop(key, None)
@@ -238,10 +240,11 @@ class BaseConfig(ABC):
             listener: Callable[[str|tuple[str], Any], None]
         ) -> None:
         """Adds a subscription to the event. Automatic events include
-            ('set', *key), ('unset', *key), 'save', and 'load'. Custom
-            hierarchical events are supported and bubble properly.
-            Wildcards: ('*', *key), ('set', '*'), ('unset', '*'), and
-            '*'/('*',) (all). The listener receives (event_key, data).
+            `('set', *key)`, `('unset', *key)`, 'save', and 'load'.
+            Custom hierarchical events are supported and bubble properly.
+            Wildcards: `('*', *key)`, `('set', '*')`, `('unset', '*')`,
+            and `'*'`/`('*',)` (all). The listener receives
+            `(event_key, data)`.
         """
         type_assert(type(event) in (str, tuple), 'event must be str|tuple[str]')
         if type(event) is tuple:
@@ -259,8 +262,8 @@ class BaseConfig(ABC):
             listener: Callable[[str|tuple[str], Any], None]
         ) -> None:
         """Removes a subscription to the event. Available events
-            published automatically are 'save', 'load', ('set', *key),
-            and ('unset', *key).
+            published automatically are 'save', 'load', `('set', *key)`,
+            and `('unset', *key)`.
         """
         type_assert(type(event) in (str, tuple), 'event must be str|tuple[str]')
         if type(event) is tuple:
@@ -278,10 +281,11 @@ class BaseConfig(ABC):
     def publish(self, event: str|tuple[str], data: Any) -> None:
         """Publishes an event to the subscribers. Bubbles up from exact
             matches through parent levels and wildcards (i.e.
-            ('*', *key), ('set', '*'), ('unset', '*'), ('*',)). Nested
-            events notify all parent listeners (e.g., set(['a', 'b'])
-            reaches ('set', 'a') and ('do', 'foo', 'bar') reaches
-            ('*', 'foo')). Deduplicates listeners to avoid calling the
+            `('*', *key)`, `('set', '*')`, `('unset', '*')`, `('*',)`).
+            Nested events notify all parent listeners (e.g.,
+            `set(['a', 'b'])` reaches `('set', 'a'`) and
+            `('do', 'foo', 'bar')` reaches
+            `('*', 'foo')`). Deduplicates listeners to avoid calling the
             same listener more than once. Exceptions raised by listeners
             are suppressed.
         """
