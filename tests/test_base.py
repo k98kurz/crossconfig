@@ -108,6 +108,56 @@ class TestBase(unittest.TestCase):
         config.publish("test_event", "data2")
         assert received == [("test_event", "data1")], received
 
+    def test_subscribe_type_guards(self):
+        config = BaseConfig(self.app_name)
+        listener = lambda *_: ...
+
+        with self.assertRaises(TypeError):
+            config.subscribe(123, listener)
+        with self.assertRaises(TypeError):
+            config.subscribe(b'invalid', listener)
+        with self.assertRaises(TypeError):
+            config.subscribe(('valid', b'invalid'), listener)
+        with self.assertRaises(TypeError):
+            config.subscribe(('cannot use ints', 123), listener)
+        with self.assertRaises(TypeError):
+            config.subscribe({'invalid'}, listener)
+        with self.assertRaises(TypeError):
+            config.subscribe({'not':'valid'}, listener)
+        # str is valid
+        config.subscribe('valid', listener)
+        with self.assertRaises(TypeError):
+            config.subscribe('valid', 'not callable')
+
+        # list[str] and tuple[str] valid
+        config.subscribe(('secret', 'compatibility'), listener)
+        config.subscribe(['secret', 'compatibility'], listener)
+
+    def test_unsubscribe_type_guards(self):
+        config = BaseConfig(self.app_name)
+        listener = lambda *_: ...
+
+        with self.assertRaises(TypeError):
+            config.unsubscribe(123, listener)
+        with self.assertRaises(TypeError):
+            config.unsubscribe(b'invalid', listener)
+        with self.assertRaises(TypeError):
+            config.unsubscribe(('valid', b'invalid'), listener)
+        with self.assertRaises(TypeError):
+            config.unsubscribe(('cannot use ints', 123), listener)
+        with self.assertRaises(TypeError):
+            config.unsubscribe({'invalid'}, listener)
+        with self.assertRaises(TypeError):
+            config.unsubscribe({'not':'valid'}, listener)
+        # str is valid
+        config.unsubscribe('valid', listener)
+        with self.assertRaises(TypeError):
+            config.unsubscribe('valid', 'not callable')
+
+        # list[str] and tuple[str] valid
+        config.unsubscribe(('secret', 'compatibility'), listener)
+        config.unsubscribe(['secret', 'compatibility'], listener)
+
     def test_duplicate_subscription_prevention(self):
         config = BaseConfig(self.app_name)
         received = []

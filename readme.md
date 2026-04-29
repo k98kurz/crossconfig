@@ -257,7 +257,7 @@ find tests/ -name test_*.py -print -exec python {} \;
 Testing suites are platform-specific, but the tests that should not run on a
 given platform will be skipped if their files are run.
 
-There are a total of 38 tests: 28 tests of the base class methods; 5 tests for
+There are a total of 42 tests: 32 tests of the base class methods; 5 tests for
 POSIX systems; and 5 tests for Windows.
 
 (Platform-dependent test suites only run on the appropriate platforms.)

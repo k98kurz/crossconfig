@@ -246,6 +246,7 @@ class BaseConfig(ABC):
             and `'*'`/`('*',)` (all). The listener receives
             `(event_key, data)`.
         """
+        event = tuple(event) if isinstance(event, list) else event
         type_assert(type(event) in (str, tuple), 'event must be str|tuple[str]')
         if type(event) is tuple:
             type_assert(
@@ -265,6 +266,7 @@ class BaseConfig(ABC):
             published automatically are 'save', 'load', `('set', *key)`,
             and `('unset', *key)`.
         """
+        event = tuple(event) if isinstance(event, list) else event
         type_assert(type(event) in (str, tuple), 'event must be str|tuple[str]')
         if type(event) is tuple:
             type_assert(
@@ -320,7 +322,7 @@ class BaseConfig(ABC):
             called.add(listener)
             try:
                 listener(event, data)
-            except:
+            except Exception:
                 ...
 
 
