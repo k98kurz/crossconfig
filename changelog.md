@@ -1,3 +1,14 @@
+## 0.0.6
+
+- Added CLI command for exporting an AI coding agent skill
+  - `crossconfig skill` to output to stdout
+  - `crossconfig skill -O path` or `crossconfig skill --output path` to create
+    `{path}/crossconfig/SKILL.md`
+  - `crossconfig opencode` to create `.opencode/skills/crossconfig/SKILL.md`
+  - `crossconfig claude` to create `.claude/skills/crossconfig/SKILL.md`
+  - `crossconfig cursor` to create `.cursor/skills/crossconfig/SKILL.md`
+  - `crossconfig codex` to create `.agents/skills/crossconfig/SKILL.md`
+
 ## 0.0.5
 
 - Added list key syntax for nested configuration access

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "crossconfig"
-version = "0.0.5"
+version = "0.0.6"
 authors = [
   { name="k98kurz", email="k98kurz@gmail.com" },
 ]
@@ -24,3 +24,6 @@ classifiers = [
 "Homepage" = "https://pycelium.com"
 "Repository" = "https://github.com/k98kurz/crossconfig"
 "Bug Tracker" = "https://github.com/k98kurz/crossconfig/issues"
+
+[project.scripts]
+crossconfig = "crossconfig.cli:main"

@@ -14,6 +14,7 @@ assignees: k98kurz
 Once all other issues are complete, prepare to release the next version.
 
 - [ ] Review and update docstrings
+- [ ] Update SKILL.md
 - [ ] Update docs.md
 - [ ] Update readme.md
 - [ ] Update changelog.md
