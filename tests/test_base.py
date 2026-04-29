@@ -26,11 +26,11 @@ class TestBase(unittest.TestCase):
 
     def test_get_set_unset(self):
         config = BaseConfig(self.app_name)
-        assert config.get("test") is None
+        assert config.get("test") is None, config.get("test")
         config.set("test", "value")
-        assert config.get("test") == "value"
+        assert config.get("test") == "value", config.get("test")
         config.unset("test")
-        assert config.get("test") is None
+        assert config.get("test") is None, config.get("test")
 
     def test_subscribe_and_publish(self):
         config = BaseConfig(self.app_name)
@@ -41,7 +41,7 @@ class TestBase(unittest.TestCase):
 
         config.subscribe("custom_event", listener)
         config.publish("custom_event", "test_data")
-        assert received == [("custom_event", "test_data")]
+        assert received == [("custom_event", "test_data")], received
 
     def test_set_triggers_event(self):
         config = BaseConfig(self.app_name)
@@ -52,12 +52,12 @@ class TestBase(unittest.TestCase):
 
         config.subscribe(("set", "foo"), listener)
         config.set("foo", "bar")
-        assert received == [(("set", "foo"), "bar")]
+        assert received == [(("set", "foo"), "bar")], received
 
         received.clear()
         config.subscribe(("set", "a", "b", "c"), listener)
         config.set(["a", "b", "c"], 123)
-        assert received == [(("set", "a", "b", "c"), 123)]
+        assert received == [(("set", "a", "b", "c"), 123)], received
 
     def test_unset_triggers_event(self):
         config = BaseConfig(self.app_name)
@@ -68,16 +68,16 @@ class TestBase(unittest.TestCase):
 
         config.subscribe(("unset", "foo"), listener)
         config.unset("foo")
-        assert received == [(("unset", "foo"), None)]
+        assert received == [(("unset", "foo"), None)], received
 
     def test_list_key_unset(self):
         config = BaseConfig(self.app_name)
         config.set(["parent", "child", "value"], 123)
-        assert config.get(["parent", "child", "value"]) == 123
+        assert config.get(["parent", "child", "value"]) == 123, config.get(["parent", "child", "value"])
         config.unset(["parent", "child", "value"])
-        assert config.get(["parent", "child", "value"]) is None
-        assert isinstance(config.get("parent"), dict)
-        assert isinstance(config.get(["parent", "child"]), dict)
+        assert config.get(["parent", "child", "value"]) is None, config.get(["parent", "child", "value"])
+        assert isinstance(config.get("parent"), dict), config.get("parent")
+        assert isinstance(config.get(["parent", "child"]), dict), config.get(["parent", "child"])
 
     def test_unset_triggers_event_with_list_key(self):
         config = BaseConfig(self.app_name)
@@ -90,10 +90,10 @@ class TestBase(unittest.TestCase):
         config.set(["parent", "child"], "value")
         received.clear()
         config.unset(["parent", "child"])
-        assert received == [(("unset", "parent", "child"), None)]
+        assert received == [(("unset", "parent", "child"), None)], received
         received.clear()
         config.unset(["nonexistent", "path"])
-        assert received == [(("unset", "nonexistent", "path"), None)]
+        assert received == [(("unset", "nonexistent", "path"), None)], received
 
     def test_unsubscribe_removes_listener(self):
         config = BaseConfig(self.app_name)
@@ -106,7 +106,7 @@ class TestBase(unittest.TestCase):
         config.publish("test_event", "data1")
         config.unsubscribe("test_event", listener)
         config.publish("test_event", "data2")
-        assert received == [("test_event", "data1")]
+        assert received == [("test_event", "data1")], received
 
     def test_duplicate_subscription_prevention(self):
         config = BaseConfig(self.app_name)
@@ -118,7 +118,7 @@ class TestBase(unittest.TestCase):
         config.subscribe("test_event", listener)
         config.subscribe("test_event", listener)
         config.publish("test_event", "data")
-        assert received == [("test_event", "data")]
+        assert received == [("test_event", "data")], received
 
     def test_wildcard_all(self):
         config = BaseConfig(self.app_name)
@@ -132,11 +132,11 @@ class TestBase(unittest.TestCase):
         config.set(["nested", "path", "value"], "nested_value")
         config.unset("foo")
         config.publish("custom", "custom_data")
-        assert len(received) == 4
-        assert (("set", "foo"), "value1") in received
-        assert (("set", "nested", "path", "value"), "nested_value") in received
-        assert (("unset", "foo"), None) in received
-        assert ("custom", "custom_data") in received
+        assert len(received) == 4, len(received)
+        assert (("set", "foo"), "value1") in received, received
+        assert (("set", "nested", "path", "value"), "nested_value") in received, received
+        assert (("unset", "foo"), None) in received, received
+        assert ("custom", "custom_data") in received, received
 
     def test_wildcard_set_star(self):
         config = BaseConfig(self.app_name)
@@ -150,10 +150,10 @@ class TestBase(unittest.TestCase):
         config.set("bar", "value2")
         config.set(["nested", "key"], "nested_value")
         config.unset("foo")
-        assert len(received) == 3
-        assert (("set", "foo"), "value1") in received
-        assert (("set", "bar"), "value2") in received
-        assert (("set", "nested", "key"), "nested_value") in received
+        assert len(received) == 3, len(received)
+        assert (("set", "foo"), "value1") in received, received
+        assert (("set", "bar"), "value2") in received, received
+        assert (("set", "nested", "key"), "nested_value") in received, received
 
     def test_wildcard_unset_star(self):
         config = BaseConfig(self.app_name)
@@ -166,9 +166,9 @@ class TestBase(unittest.TestCase):
         config.set("foo", "value")
         config.unset("foo")
         config.unset("bar")
-        assert len(received) == 2
-        assert (("unset", "foo"), None) in received
-        assert (("unset", "bar"), None) in received
+        assert len(received) == 2, len(received)
+        assert (("unset", "foo"), None) in received, received
+        assert (("unset", "bar"), None) in received, received
 
     def test_wildcard_key_ending(self):
         config = BaseConfig(self.app_name)
@@ -183,8 +183,8 @@ class TestBase(unittest.TestCase):
         config.unset("foo")
         config.unset("bar")
         assert len(received) == 2, received
-        assert (("set", "foo"), "value1") in received
-        assert (("unset", "foo"), None) in received
+        assert (("set", "foo"), "value1") in received, received
+        assert (("unset", "foo"), None) in received, received
 
     def test_multiple_wildcards_deduplication(self):
         config = BaseConfig(self.app_name)
@@ -197,7 +197,7 @@ class TestBase(unittest.TestCase):
         config.subscribe(("set", "*"), listener)
         config.subscribe("*", listener)
         config.set("foo", "value")
-        assert received == [(("set", "foo"), "value")]
+        assert received == [(("set", "foo"), "value")], received
 
     def test_publishing_with_no_subscribers_raises_no_errors(self):
         config = BaseConfig(self.app_name)
@@ -220,7 +220,7 @@ class TestBase(unittest.TestCase):
         config.subscribe("test_event", bad_listener)
         config.subscribe("test_event", good_listener)
         config.publish("test_event", "data")
-        assert received == [("test_event", "data")]
+        assert received == [("test_event", "data")], received
 
     def test_multiple_listeners_same_event(self):
         config = BaseConfig(self.app_name)
@@ -241,9 +241,9 @@ class TestBase(unittest.TestCase):
         config.subscribe("test_event", listener2)
         config.subscribe("test_event", listener3)
         config.publish("test_event", "data")
-        assert received1 == [("test_event", "data")]
-        assert received2 == [("test_event", "data")]
-        assert received3 == [("test_event", "data")]
+        assert received1 == [("test_event", "data")], received1
+        assert received2 == [("test_event", "data")], received2
+        assert received3 == [("test_event", "data")], received3
 
     def test_custom_publish(self):
         config = BaseConfig(self.app_name)
@@ -255,8 +255,8 @@ class TestBase(unittest.TestCase):
         config.subscribe("custom_event", listener)
         config.publish("custom_event", {"key": "value"})
         config.publish("another_event", [1, 2, 3])
-        assert len(received) == 1
-        assert received == [("custom_event", {"key": "value"})]
+        assert len(received) == 1, len(received)
+        assert received == [("custom_event", {"key": "value"})], received
 
     def test_mixed_value_types(self):
         config = BaseConfig(self.app_name)
@@ -270,48 +270,48 @@ class TestBase(unittest.TestCase):
         config.set("bar", 42)
         config.set("baz", True)
         config.set("qux", 3.14)
-        assert len(received) == 1
-        assert received == [(("set", "foo"), "string_value")]
+        assert len(received) == 1, len(received)
+        assert received == [(("set", "foo"), "string_value")], received
 
     def test_list_key_single_element(self):
         config = BaseConfig(self.app_name)
         config.set(["simple_key"], "simple_value")
-        assert config.get(["simple_key"]) == "simple_value"
-        assert config.get("simple_key") == "simple_value"
+        assert config.get(["simple_key"]) == "simple_value", config.get(["simple_key"])
+        assert config.get("simple_key") == "simple_value", config.get("simple_key")
 
     def test_list_key_nested_structure_creation(self):
         config = BaseConfig(self.app_name)
         config.set(["thing", "does", "not", "exist"], 123)
-        assert config.get(["thing", "does", "not", "exist"]) == 123
-        assert config.settings["thing"]["does"]["not"]["exist"] == 123
-        assert config.settings["thing"] == {"does": {"not": {"exist": 123}}}
+        assert config.get(["thing", "does", "not", "exist"]) == 123, config.get(["thing", "does", "not", "exist"])
+        assert config.settings["thing"]["does"]["not"]["exist"] == 123, config.settings["thing"]["does"]["not"]["exist"]
+        assert config.settings["thing"] == {"does": {"not": {"exist": 123}}}, config.settings["thing"]
 
     def test_list_key_get_with_default(self):
         config = BaseConfig(self.app_name)
         config.set(["exists"], "value")
-        assert config.get(["exists", "missing"], "default_val") == "default_val"
-        assert config.get(["completely", "missing", "path"], 42) == 42
+        assert config.get(["exists", "missing"], "default_val") == "default_val", config.get(["exists", "missing"], "default_val")
+        assert config.get(["completely", "missing", "path"], 42) == 42, config.get(["completely", "missing", "path"], 42)
 
     def test_list_key_overwrite_existing_value(self):
         config = BaseConfig(self.app_name)
         config.set("nested", "key")
-        assert config.get("nested") == "key"
+        assert config.get("nested") == "key", config.get("nested")
         config.set(["nested", "key"], "original")
-        assert config.get("nested") == {"key": "original"}
-        assert config.get(["nested", "key"]) == "original"
+        assert config.get("nested") == {"key": "original"}, config.get("nested")
+        assert config.get(["nested", "key"]) == "original", config.get(["nested", "key"])
         config.set(["nested", "key"], "updated")
-        assert config.get(["nested", "key"]) == "updated"
+        assert config.get(["nested", "key"]) == "updated", config.get(["nested", "key"])
 
     def test_list_key_intermediate_dict_preservation(self):
         config = BaseConfig(self.app_name)
         config.set(["path", "to", "value1"], 100)
         config.set(["path", "to", "value2"], 200)
         config.set(["path", "from", "value3"], 300)
-        assert config.get(["path", "to", "value1"]) == 100
-        assert config.get(["path", "to", "value2"]) == 200
-        assert config.get(["path", "from", "value3"]) == 300
-        assert config.settings["path"]["to"] == {"value1": 100, "value2": 200}
-        assert config.settings["path"]["from"] == {"value3": 300}
+        assert config.get(["path", "to", "value1"]) == 100, config.get(["path", "to", "value1"])
+        assert config.get(["path", "to", "value2"]) == 200, config.get(["path", "to", "value2"])
+        assert config.get(["path", "from", "value3"]) == 300, config.get(["path", "from", "value3"])
+        assert config.settings["path"]["to"] == {"value1": 100, "value2": 200}, config.settings["path"]["to"]
+        assert config.settings["path"]["from"] == {"value3": 300}, config.settings["path"]["from"]
 
     def test_save_event_published(self):
         config = BaseConfig(self.app_name)
@@ -323,7 +323,7 @@ class TestBase(unittest.TestCase):
         config.subscribe("save", listener)
         config.set("test", "value")
         config.save()
-        assert received == [("save", None)]
+        assert received == [("save", None)], received
 
     def test_load_event_published_success(self):
         config = BaseConfig(self.app_name)
@@ -337,9 +337,9 @@ class TestBase(unittest.TestCase):
         config2 = BaseConfig(self.app_name)
         config2.subscribe("load", listener)
         config2.load()
-        assert len(received) == 1
-        assert received[0][0] == "load"
-        assert received[0][1] == {"test": "value"}
+        assert len(received) == 1, len(received)
+        assert received[0][0] == "load", received[0][0]
+        assert received[0][1] == {"test": "value"}, received[0][1]
 
     def test_load_event_published_no_file(self):
         config = BaseConfig(self.app_name)
@@ -354,7 +354,7 @@ class TestBase(unittest.TestCase):
 
         config.subscribe("load", listener)
         config.load()
-        assert received == [("load", {})]
+        assert received == [("load", {})], received
 
     def test_load_event_published_json_error(self):
         config = BaseConfig(self.app_name)
@@ -369,10 +369,10 @@ class TestBase(unittest.TestCase):
         with open(settings_path, "w") as f:
             f.write("invalid json {")
         result = config.load()
-        assert len(received) == 1
-        assert received[0][0] == "load"
-        assert isinstance(received[0][1], json.decoder.JSONDecodeError)
-        assert result is received[0][1]
+        assert len(received) == 1, len(received)
+        assert received[0][0] == "load", received[0][0]
+        assert isinstance(received[0][1], json.decoder.JSONDecodeError), received[0][1]
+        assert result is received[0][1], result
 
 
 if __name__ == "__main__":
