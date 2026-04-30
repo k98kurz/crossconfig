@@ -37,12 +37,12 @@ class TestPosix(unittest.TestCase):
 
     def test_path(self):
         config = crossconfig.PosixConfig(self.app_name)
-        assert config.path()[-len(self.app_name):] == self.app_name, \
-            (config.path()[-len(self.app_name):], self.app_name)
-        assert config.path("subdir")[-len(self.app_name) - 7:] == f"{self.app_name}/subdir", \
-            (config.path("subdir")[-len(self.app_name) - 7:], f"{self.app_name}/subdir")
-        assert f"{self.app_name}/subdir/{self.file_name}" in config.path(["subdir", self.file_name]), \
-            (config.path(["subdir", self.file_name]), f"{self.app_name}/subdir/{self.file_name}")
+        assert str(config.path())[-len(self.app_name):] == self.app_name, \
+            (str(config.path())[-len(self.app_name):], self.app_name)
+        assert str(config.path("subdir"))[-len(self.app_name) - 7:] == f"{self.app_name}/subdir", \
+            (str(config.path("subdir"))[-len(self.app_name) - 7:], f"{self.app_name}/subdir")
+        assert f"{self.app_name}/subdir/{self.file_name}" in str(config.path(["subdir", self.file_name])), \
+            (str(config.path(["subdir", self.file_name])), f"{self.app_name}/subdir/{self.file_name}")
 
     def test_get_config(self):
         config = crossconfig.get_config(self.app_name, portable=False)

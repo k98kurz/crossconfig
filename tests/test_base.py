@@ -1,11 +1,12 @@
 from context import crossconfig
+from pathlib import Path
 import unittest
 import os
 
 
 class BaseConfig(crossconfig.BaseConfig):
-    def base_path(self) -> str:
-        return f"base--{self.app_name}"
+    def base_path(self) -> Path:
+        return Path(f"base--{self.app_name}")
 
 
 class TestBase(unittest.TestCase):

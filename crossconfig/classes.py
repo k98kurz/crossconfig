@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Callable, Protocol
 from .errors import type_assert
 import json
@@ -12,11 +13,11 @@ class ConfigProtocol(Protocol):
         """Initializes the config object."""
         ...
 
-    def base_path(self) -> str:
+    def base_path(self) -> Path:
         """Returns the base path to the config folder."""
         ...
 
-    def path(self, file_or_subdir: str|list[str]|None = None) -> str:
+    def path(self, file_or_subdir: str|list[str]|None = None) -> Path:
         """Returns the path to the config folder or a file or subfolder
             within it. This must return a valid path for the current
             platform and user, and it should be scoped to the app name.
@@ -122,11 +123,11 @@ class BaseConfig(ABC):
         os.makedirs(self.path(), exist_ok=True)
 
     @abstractmethod
-    def base_path(self) -> str:
+    def base_path(self) -> Path:
         """Returns the base path to the config folder."""
         pass
 
-    def path(self, file_or_subdir: str|list[str]|None = None) -> str:
+    def path(self, file_or_subdir: str|list[str]|None = None) -> Path:
         """Returns the path to the config folder or a file or subfolder
             within it. This must return a valid path for the current
             platform and user, and it should be scoped to the app name.
@@ -138,7 +139,10 @@ class BaseConfig(ABC):
             return self.base_path()
         if isinstance(file_or_subdir, str):
             file_or_subdir = [file_or_subdir]
-        return os.path.join(self.base_path(), *file_or_subdir)
+        result = self.base_path()
+        for part in file_or_subdir:
+            result = result / part
+        return result
 
     def load(self) -> None|json.decoder.JSONDecodeError:
         """Loads the settings from the config folder if it exists. This
@@ -331,14 +335,12 @@ class WindowsConfig(BaseConfig):
         """Initializes the config object."""
         super().__init__(app_name)
 
-    def base_path(self) -> str:
+    def base_path(self) -> Path:
         """Returns the path to the config folder. This will return a
             valid path for the current user in Windows, and it is scoped
             to the app name.
         """
-        return os.path.join(
-            os.path.expanduser('~'), "AppData", "Local", self.app_name
-        )
+        return Path(os.path.expanduser('~')) / "AppData" / "Local" / self.app_name
 
 
 class PosixConfig(BaseConfig):
@@ -346,12 +348,12 @@ class PosixConfig(BaseConfig):
         """Initializes the config object."""
         super().__init__(app_name)
 
-    def base_path(self) -> str:
+    def base_path(self) -> Path:
         """Returns the path to the config folder. This will return a
             valid path for the current user in Posix, and it is scoped
             to the app name.
         """
-        return os.path.join(os.path.expanduser('~'), '.config', self.app_name)
+        return Path(os.path.expanduser('~')) / '.config' / self.app_name
 
 
 class PortableConfig(BaseConfig):
@@ -359,12 +361,12 @@ class PortableConfig(BaseConfig):
         """Initializes the config object."""
         super().__init__(app_name)
 
-    def base_path(self) -> str:
+    def base_path(self) -> Path:
         """Returns the path to the config folder. This will return a
             valid path for the current working directory, and it is
             scoped to the app name.
         """
-        return os.path.join(os.path.abspath(os.getcwd()), self.app_name)
+        return Path(os.path.abspath(os.getcwd())) / self.app_name
 
 
 _CONFIGS = {}
