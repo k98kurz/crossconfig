@@ -36,7 +36,50 @@ keys = config.list()                  # List all keys
 config.save()
 ```
 
-`get_config()` returns a singleton - the same instance for the same `app_name` within a process.
+`get_config()` returns a **singleton** - the same instance for the same `app_name` and `portable` mode within a process. This ensures consistent behavior across your application. Use `replace=True` to force recreation (primarily for testing).
+
+## Path Utilities
+
+CrossConfig provides utilities for working with paths in your configuration directory.
+
+### Getting Configuration Paths
+
+```python
+# Get the config folder path
+folder = config.path()
+
+# Get path to a specific file
+log_path = config.path("app.log")               # .../app.log
+
+# Get path to nested directories/files using list of strs
+data_file = config.path(["cache", "data.db"])   # .../cache/data.db
+```
+
+**Key Features:**
+- **Platform-appropriate separators**: Lists are joined with correct OS separators (`/` or `\`)
+- **Scoped to app_name**: All paths are within your app's config directory
+- **Does not create files**: Only returns paths; doesn't create files or directories
+
+### Common Path Use Cases
+
+```python
+# Access database paths
+database_path = config.path("app.db")
+migrations_path = config.path("migrations")
+os.makedirs(migrations_path, exist_ok=True)
+
+# Access custom directories
+chunks_dir = config.path(["sync", "chunks"])
+os.makedirs(chunks_dir, exist_ok=True)
+
+# Working with cache items
+cache_path = config.path("cache")
+files = []
+if os.path.exists(cache_path):
+    for filename in os.listdir(cache_path):
+        with open(config.path(["cache", filename]), 'r') as f:
+            files.append(f.read())
+```
 
 ## Nested Configuration
 
@@ -125,7 +168,12 @@ config = get_config("my_app")
 
 # For portable configs (current working directory)
 config = get_config("my_app", portable=True)
+
+# Force recreation of singleton (useful for testing)
+config = get_config("my_app", replace=True)
 ```
+
+The `replace` parameter forces creation of a new config instance even if one already exists for the same `app_name`. This is primarily useful for testing to ensure a clean state.
 
 Portable mode stores config in the project directory instead of user's config folder.
 
@@ -155,6 +203,19 @@ if old_host:
     config.save()
 ```
 
+## Utility Functions
+
+### `version()`
+
+Get the installed version of crossconfig:
+
+```python
+from crossconfig import get_config, version
+
+print(f"CrossConfig version: {version()}")
+# Output: CrossConfig version: 0.0.6
+```
+
 ## Important Notes
 
 - **JSON format**: Configuration is stored as JSON in `settings.json`
@@ -178,5 +239,6 @@ else:
 
 Consider:
 - Platform-specific paths (use `portable=True` for tests)
-- Clean slate between tests (unset all keys or use fresh app_name)
+- Clean slate between tests (use `replace=True` or use fresh app_name)
 - Event listener cleanup (unsubscribe listeners to avoid cross-test pollution)
+- Path utility usage (use `config.path()` for test file paths)
