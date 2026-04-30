@@ -54,3 +54,9 @@ assert config.path()[-len(self.app_name):] == self.app_name, \
 ```
 
 This pattern provides actual failure values when assertions fail.
+
+## Documentation
+
+- docstrings should be kept concise and NOT reiterate type annotations
+- docs.md is generated automatically by autodox; it should not be edited directly
+- readme.md, changelog.md, and crossconfig/SKILL.md must be updated by a human or the Documentation agent
