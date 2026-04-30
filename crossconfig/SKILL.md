@@ -155,6 +155,8 @@ config.subscribe("custom_event", lambda e, d: print(f"Custom: {d}"))
 config.publish("custom_event", {"data": "value"})
 ```
 
+**Note:** String and single-element tuple events trigger each other's subscribers. `config.subscribe("custom", fn)` is triggered by both `publish("custom")` and `publish(("custom",))`. `config.subscribe(("custom",), fn)` is triggered by both `publish(("custom",))` and `publish("custom")`. Multi-element tuples like `("custom", "child")` do not trigger string subscribers.
+
 ### Unsubscribing
 ```python
 listener = lambda e, d: print(f"Event: {e}")
@@ -215,7 +217,7 @@ Get the installed version of crossconfig:
 from crossconfig import get_config, version
 
 print(f"CrossConfig version: {version()}")
-# Output: CrossConfig version: 0.0.6
+# Output: CrossConfig version: 0.0.7
 ```
 
 ## Important Notes

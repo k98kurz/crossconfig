@@ -69,7 +69,7 @@ assert config.get(["ui", "theme"], "default") == "default"
 
 Values can be any JSON-compatible type: `bool`, `str`, `int`, `float`, `list`, or `dict`.
 
-### Event Notifications
+### Event System
 
 The config object supports a publish/subscribe event system for reacting to
 configuration changes. Automatic events include the following: `('set', *key)`,
@@ -188,6 +188,8 @@ config.unsubscribe("custom_event", listener)
 # Publishing now won't trigger the listener
 config.publish("custom_event", {"message": "hello again"})
 ```
+
+**Note:** String and single-element tuple events trigger each other's subscribers. Subscribing to `"custom"` is triggered by both `publish("custom")` and `publish(("custom",))`. Subscribing to `("custom",)` is triggered by both `publish(("custom",))` and `publish("custom")`. Multi-element tuples like `("event", "child")` do not trigger string subscribers.
 </details>
 
 ### Notes
@@ -263,7 +265,7 @@ find tests/ -name test_*.py -print -exec python {} \;
 Testing suites are platform-specific, but the tests that should not run on a
 given platform will be skipped if their files are run.
 
-There are a total of 42 tests: 32 tests of the base class methods; 5 tests for
+There are a total of 46 tests: 36 tests of the base class methods; 5 tests for
 POSIX systems; and 5 tests for Windows.
 
 (Platform-dependent test suites only run on the appropriate platforms.)

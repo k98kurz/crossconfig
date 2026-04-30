@@ -10,11 +10,11 @@
 
 Initializes the config object.
 
-##### `base_path() -> str:`
+##### `base_path() -> Path:`
 
 Returns the base path to the config folder.
 
-##### `path(file_or_subdir: str | list[str] | None = None) -> str:`
+##### `path(file_or_subdir: str | list[str] | None = None) -> Path:`
 
 Returns the path to the config folder or a file or subfolder within it. This
 must return a valid path for the current platform and user, and it should be
@@ -62,7 +62,11 @@ does not exist.
 Adds a subscription to the event. Automatic events include `('set', *key)`,
 `('unset', *key)`, 'save', and 'load'. Custom hierarchical events are supported
 and bubble properly. Wildcards: `('*', *key)`, `('set', '*')`, `('unset', '*')`,
-and `'*'`/`('*',)` (all). The listener receives `(event_key, data)`.
+and `'*'`/`('*',)` (all). The listener receives `(event_key, data)`. Note that
+listeners subscribed to `'parent'` will receive the `('parent',)` event but will
+not receive any bubbled events, while listeners subscribed to `('parent',)` will
+receive `'parent'` and bubbled events, e.g. `('parent', 'child')`. Listeners are
+deduplicated before being called, and order of listeners is deterministic.
 
 ##### `unsubscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
@@ -75,7 +79,11 @@ Publishes an event to the subscribers. Bubbles up from exact matches through
 parent levels and wildcards (i.e. `('*', *key)`, `('set', '*')`, `('unset',
 '*')`, `('*',)`). Nested events notify all parent listeners (e.g., `set(['a',
 'b'])` reaches `('set', 'a'`) and `('do', 'foo', 'bar')` reaches `('*',
-'foo')`). Deduplicates listeners to avoid calling the same listener more than once. Exceptions raised by listeners are suppressed.
+'foo')`). Publishing `'parent'` triggers `('parent',)` listeners, and publishing
+`('parent,')` triggers `'parent'` listeners, but publishing `('parent',
+'child')` does not trigger `'parent'` listeners. Deduplicates listeners to avoid
+calling the same listener more than once. Exceptions raised by listeners are
+suppressed.
 
 ### `BaseConfig(ABC)`
 
@@ -83,8 +91,8 @@ parent levels and wildcards (i.e. `('*', *key)`, `('set', '*')`, `('unset',
 
 - app_name: str
 - settings: dict[str, bool | str | int | float | list | dict]
-- _subscriptions: dict[tuple[str], list[Callable[[str | tuple[str], Any],
-None]]]
+- _subscriptions: dict[str | tuple[str], dict[Callable[[str | tuple[str], Any],
+None], None]]
 
 #### Methods
 
@@ -92,11 +100,11 @@ None]]]
 
 Initializes the config object.
 
-##### `base_path() -> str:`
+##### `base_path() -> Path:`
 
 Returns the base path to the config folder.
 
-##### `path(file_or_subdir: str | list[str] | None = None) -> str:`
+##### `path(file_or_subdir: str | list[str] | None = None) -> Path:`
 
 Returns the path to the config folder or a file or subfolder within it. This
 must return a valid path for the current platform and user, and it should be
@@ -144,7 +152,11 @@ does not exist.
 Adds a subscription to the event. Automatic events include `('set', *key)`,
 `('unset', *key)`, 'save', and 'load'. Custom hierarchical events are supported
 and bubble properly. Wildcards: `('*', *key)`, `('set', '*')`, `('unset', '*')`,
-and `'*'`/`('*',)` (all). The listener receives `(event_key, data)`.
+and `'*'`/`('*',)` (all). The listener receives `(event_key, data)`. Note that
+listeners subscribed to `'parent'` will receive the `('parent',)` event but will
+not receive any bubbled events, while listeners subscribed to `('parent',)` will
+receive `'parent'` and bubbled events, e.g. `('parent', 'child')`. Listeners are
+deduplicated before being called, and order of listeners is deterministic.
 
 ##### `unsubscribe(event: str | tuple[str], listener: Callable[[str | tuple[str], Any], None]) -> None:`
 
@@ -157,7 +169,11 @@ Publishes an event to the subscribers. Bubbles up from exact matches through
 parent levels and wildcards (i.e. `('*', *key)`, `('set', '*')`, `('unset',
 '*')`, `('*',)`). Nested events notify all parent listeners (e.g., `set(['a',
 'b'])` reaches `('set', 'a'`) and `('do', 'foo', 'bar')` reaches `('*',
-'foo')`). Deduplicates listeners to avoid calling the same listener more than once. Exceptions raised by listeners are suppressed.
+'foo')`). Publishing `'parent'` triggers `('parent',)` listeners, and publishing
+`('parent,')` triggers `'parent'` listeners, but publishing `('parent',
+'child')` does not trigger `'parent'` listeners. Deduplicates listeners to avoid
+calling the same listener more than once. Exceptions raised by listeners are
+suppressed.
 
 ### `WindowsConfig(BaseConfig)`
 
@@ -165,8 +181,8 @@ parent levels and wildcards (i.e. `('*', *key)`, `('set', '*')`, `('unset',
 
 - app_name: str
 - settings: dict[str, bool | str | int | float | list | dict]
-- _subscriptions: dict[tuple[str], list[Callable[[str | tuple[str], Any],
-None]]]
+- _subscriptions: dict[str | tuple[str], dict[Callable[[str | tuple[str], Any],
+None], None]]
 
 #### Methods
 
@@ -174,7 +190,7 @@ None]]]
 
 Initializes the config object.
 
-##### `base_path() -> str:`
+##### `base_path() -> Path:`
 
 Returns the path to the config folder. This will return a valid path for the
 current user in Windows, and it is scoped to the app name.
@@ -185,8 +201,8 @@ current user in Windows, and it is scoped to the app name.
 
 - app_name: str
 - settings: dict[str, bool | str | int | float | list | dict]
-- _subscriptions: dict[tuple[str], list[Callable[[str | tuple[str], Any],
-None]]]
+- _subscriptions: dict[str | tuple[str], dict[Callable[[str | tuple[str], Any],
+None], None]]
 
 #### Methods
 
@@ -194,7 +210,7 @@ None]]]
 
 Initializes the config object.
 
-##### `base_path() -> str:`
+##### `base_path() -> Path:`
 
 Returns the path to the config folder. This will return a valid path for the
 current user in Posix, and it is scoped to the app name.
@@ -205,8 +221,8 @@ current user in Posix, and it is scoped to the app name.
 
 - app_name: str
 - settings: dict[str, bool | str | int | float | list | dict]
-- _subscriptions: dict[tuple[str], list[Callable[[str | tuple[str], Any],
-None]]]
+- _subscriptions: dict[str | tuple[str], dict[Callable[[str | tuple[str], Any],
+None], None]]
 
 #### Methods
 
@@ -214,7 +230,7 @@ None]]]
 
 Initializes the config object.
 
-##### `base_path() -> str:`
+##### `base_path() -> Path:`
 
 Returns the path to the config folder. This will return a valid path for the
 current working directory, and it is scoped to the app name.

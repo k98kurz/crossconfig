@@ -8,7 +8,7 @@ from .classes import (
 )
 
 
-__version__ = "0.0.7-dev"
+__version__ = "0.0.7"
 
 def version() -> str:
     """Returns the version of the crossconfig package."""

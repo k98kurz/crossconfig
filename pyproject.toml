@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "crossconfig"
-version = "0.0.7-dev"
+version = "0.0.7"
 authors = [
   { name="k98kurz", email="k98kurz@gmail.com" },
 ]
@@ -30,12 +30,14 @@ crossconfig = "crossconfig.cli:main"
 
 [tool.hatch.build.targets.wheel]
 exclude = [
-  "/tests",
+  ".github",
+  "tests",
   "AGENTS.md",
 ]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
-  "/tests",
+  ".github",
+  "tests",
   "AGENTS.md",
 ]

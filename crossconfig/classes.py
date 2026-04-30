@@ -82,7 +82,12 @@ class ConfigProtocol(Protocol):
             Custom hierarchical events are supported and bubble properly.
             Wildcards: `('*', *key)`, `('set', '*')`, `('unset', '*')`,
             and `'*'`/`('*',)` (all). The listener receives
-            `(event_key, data)`.
+            `(event_key, data)`. Note that listeners subscribed to
+            `'parent'` will receive the `('parent',)` event but will not
+            receive any bubbled events, while listeners subscribed to
+            `('parent',)` will receive `'parent'` and bubbled events,
+            e.g. `('parent', 'child')`. Listeners are deduplicated
+            before being called, and order of listeners is deterministic.
         """
         ...
 
@@ -102,10 +107,13 @@ class ConfigProtocol(Protocol):
             `('*', *key)`, `('set', '*')`, `('unset', '*')`, `('*',)`).
             Nested events notify all parent listeners (e.g.,
             `set(['a', 'b'])` reaches `('set', 'a'`) and
-            `('do', 'foo', 'bar')` reaches
-            `('*', 'foo')`). Deduplicates listeners to avoid calling the
-            same listener more than once. Exceptions raised by listeners
-            are suppressed.
+            `('do', 'foo', 'bar')` reaches `('*', 'foo')`). Publishing
+            `'parent'` triggers `('parent',)` listeners, and publishing
+            `('parent,')` triggers `'parent'` listeners, but publishing
+            `('parent', 'child')` does not trigger `'parent'` listeners.
+            Deduplicates listeners to avoid calling the same listener
+            more than once. Exceptions raised by listeners are
+            suppressed.
         """
         ...
 
@@ -113,7 +121,10 @@ class ConfigProtocol(Protocol):
 class BaseConfig(ABC):
     app_name: str
     settings: dict[str, bool|str|int|float|list|dict]
-    _subscriptions: dict[tuple[str], list[Callable[[str|tuple[str], Any], None]]]
+    _subscriptions: dict[
+        str|tuple[str],
+        dict[Callable[[str|tuple[str], Any], None], None]
+    ]
 
     def __init__(self, app_name: str):
         """Initializes the config object."""
@@ -248,7 +259,12 @@ class BaseConfig(ABC):
             Custom hierarchical events are supported and bubble properly.
             Wildcards: `('*', *key)`, `('set', '*')`, `('unset', '*')`,
             and `'*'`/`('*',)` (all). The listener receives
-            `(event_key, data)`.
+            `(event_key, data)`. Note that listeners subscribed to
+            `'parent'` will receive the `('parent',)` event but will not
+            receive any bubbled events, while listeners subscribed to
+            `('parent',)` will receive `'parent'` and bubbled events,
+            e.g. `('parent', 'child')`. Listeners are deduplicated
+            before being called, and order of listeners is deterministic.
         """
         event = tuple(event) if isinstance(event, list) else event
         type_assert(type(event) in (str, tuple), 'event must be str|tuple[str]')
@@ -258,9 +274,9 @@ class BaseConfig(ABC):
             )
         type_assert(callable(listener), 'listener must be callable')
         if event not in self._subscriptions:
-            self._subscriptions[event] = []
+            self._subscriptions[event] = {}
         if listener not in self._subscriptions[event]:
-            self._subscriptions[event].append(listener)
+            self._subscriptions[event][listener] = None
 
     def unsubscribe(
             self, event: str|tuple[str],
@@ -279,10 +295,10 @@ class BaseConfig(ABC):
         type_assert(callable(listener), 'listener must be callable')
         if event not in self._subscriptions:
             return
-        try:
-            self._subscriptions[event].remove(listener)
-        except ValueError:
-            ...
+        self._subscriptions[event].pop(listener, None)
+        # reclaim some memory
+        if not len(self._subscriptions[event]):
+            self._subscriptions.pop(event)
 
     def publish(self, event: str|tuple[str], data: Any) -> None:
         """Publishes an event to the subscribers. Bubbles up from exact
@@ -290,34 +306,45 @@ class BaseConfig(ABC):
             `('*', *key)`, `('set', '*')`, `('unset', '*')`, `('*',)`).
             Nested events notify all parent listeners (e.g.,
             `set(['a', 'b'])` reaches `('set', 'a'`) and
-            `('do', 'foo', 'bar')` reaches
-            `('*', 'foo')`). Deduplicates listeners to avoid calling the
-            same listener more than once. Exceptions raised by listeners
-            are suppressed.
+            `('do', 'foo', 'bar')` reaches `('*', 'foo')`). Publishing
+            `'parent'` triggers `('parent',)` listeners, and publishing
+            `('parent,')` triggers `'parent'` listeners, but publishing
+            `('parent', 'child')` does not trigger `'parent'` listeners.
+            Deduplicates listeners to avoid calling the same listener
+            more than once. Exceptions raised by listeners are
+            suppressed.
         """
+        event = tuple(event) if isinstance(event, list) else event
         type_assert(type(event) in (str, tuple), 'event must be str|tuple[str]')
         if type(event) is tuple:
             type_assert(
                 all([type(t) is str for t in event]), 'event must be str|tuple[str]'
             )
         listeners = []
-        listeners.extend(self._subscriptions.get(event, []))
+        listeners.extend(self._subscriptions.get(event, {}).keys())
+
+        if type(event) is str:
+            listeners.extend(self._subscriptions.get((event,), {}).keys())
 
         if type(event) is tuple:
+            # trigger listeners for `'custom'` with event `('custom',)`
+            if len(event) == 1:
+                listeners.extend(self._subscriptions.get(event[0], {}).keys())
+
             # bubble up the event from deepest to shallowest listeners
-            for i in range(len(event), -1, -1):
-                listeners.extend(self._subscriptions.get(event[:i], []))
+            for i in range(len(event), 0, -1):
+                listeners.extend(self._subscriptions.get(event[:i], {}).keys())
 
             # handle root wildcards, e.g. ('*', 'thing')
             key = event[1:]
             for i in range(len(key), -1, -1):
-                listeners.extend(self._subscriptions.get(('*', *key[:i]), []))
+                listeners.extend(self._subscriptions.get(('*', *key[:i]), {}).keys())
 
             # handle ('set', '*'), ('unset', '*'), etc
-            listeners.extend(self._subscriptions.get((event[0], '*'), []))
+            listeners.extend(self._subscriptions.get((event[0], '*'), {}).keys())
 
-        listeners.extend(self._subscriptions.get('*', []))
-        listeners.extend(self._subscriptions.get(('*',), []))
+        listeners.extend(self._subscriptions.get('*', {}).keys())
+        listeners.extend(self._subscriptions.get(('*',), {}).keys())
 
         called = set()
         for listener in listeners:

@@ -4,6 +4,11 @@
   - All standard library functions that accept paths continue to work (`os.makedirs()`, `open()`, etc.)
   - Path objects provide additional convenience methods: `.exists()`, `.mkdir()`, `.read_text()`, etc.
   - Convert to string with `str()` if string operations are needed
+- Updated event system:
+  - Optimized memory + performance
+  - Listeners subscribed to `'event'` will now trigger on `('event',)`
+  - Listeners subscribed to `('event',)` will now trigger on `'event'`
+  - Subscribing to `'event'` prevents receiving bubbled events e.g. `('event', 'child')`
 
 ## 0.0.6
 

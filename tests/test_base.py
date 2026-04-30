@@ -461,6 +461,51 @@ class TestBase(unittest.TestCase):
             ("whatever", "something", "child", "grandchild"), "data3"
         ), received[2]
 
+    def test_string_publish_fires_tuple_subscription(self):
+        config = BaseConfig(self.app_name)
+        received = []
+
+        def listener(event, data):
+            received.append((event, data))
+
+        config.subscribe(("custom",), listener)
+        config.publish("custom", "data")
+        assert received == [("custom", "data")], received
+
+    def test_single_tuple_publish_fires_string_subscription(self):
+        config = BaseConfig(self.app_name)
+        received = []
+
+        def listener(event, data):
+            received.append((event, data))
+
+        config.subscribe("custom", listener)
+        config.publish(("custom",), "data")
+        assert received == [(("custom",), "data")], received
+
+    def test_nested_tuple_no_string_subscription(self):
+        config = BaseConfig(self.app_name)
+        received = []
+
+        def listener(event, data):
+            received.append((event, data))
+
+        config.subscribe("custom", listener)
+        config.publish(("custom", "child"), "data")
+        assert len(received) == 0, f"Expected 0 events, got {len(received)}"
+
+    def test_string_tuple_event_deduplication(self):
+        config = BaseConfig(self.app_name)
+        received = []
+
+        def listener(event, data):
+            received.append((event, data))
+
+        config.subscribe("test", listener)
+        config.subscribe(("test",), listener)
+        config.publish("test", "data")
+        assert received == [("test", "data")], received
+
 
 if __name__ == "__main__":
     unittest.main()
