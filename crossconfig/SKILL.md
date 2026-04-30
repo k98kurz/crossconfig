@@ -42,6 +42,8 @@ config.save()
 
 CrossConfig provides utilities for working with paths in your configuration directory.
 
+- `config.path(file_or_subdir: str|list[str]|None = None) -> Path`
+
 ### Getting Configuration Paths
 
 ```python

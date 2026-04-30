@@ -1,3 +1,10 @@
+## 0.0.7
+
+- Breaking change: `path()` and `base_path()` methods now return `pathlib.Path` objects instead of strings
+  - All standard library functions that accept paths continue to work (`os.makedirs()`, `open()`, etc.)
+  - Path objects provide additional convenience methods: `.exists()`, `.mkdir()`, `.read_text()`, etc.
+  - Convert to string with `str()` if string operations are needed
+
 ## 0.0.6
 
 - Added CLI command for exporting an AI coding agent skill

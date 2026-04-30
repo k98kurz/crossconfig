@@ -49,8 +49,8 @@ assert config.get("test") is None, config.get("test")
 assert received == [("custom_event", "test_data")], received
 
 # For complex expressions, use the exact expression
-assert config.path()[-len(self.app_name):] == self.app_name, \
-    (config.path()[-len(self.app_name):], self.app_name)
+assert str(config.path())[-len(self.app_name):] == self.app_name, \
+    (str(config.path())[-len(self.app_name):], self.app_name)
 ```
 
 This pattern provides actual failure values when assertions fail.
