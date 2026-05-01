@@ -1,5 +1,6 @@
 from context import crossconfig
 from pathlib import Path
+import logging
 import unittest
 import os
 
@@ -505,6 +506,58 @@ class TestBase(unittest.TestCase):
         config.subscribe(("test",), listener)
         config.publish("test", "data")
         assert received == [("test", "data")], received
+
+    def test_listener_errors_suppressed_by_default(self):
+        config = BaseConfig(self.app_name)
+
+        def failing_listener(event, data):
+            raise ValueError("Test error")
+
+        config.subscribe("custom", failing_listener)
+        config.publish("custom", "data")
+
+    def test_listener_error_suppression_can_be_disabled(self):
+        config = BaseConfig(self.app_name)
+        config.set_suppress_listener_errors(False)
+
+        def failing_listener(event, data):
+            raise ValueError("Test error")
+
+        config.subscribe("custom", failing_listener)
+        with self.assertRaises(ValueError):
+            config.publish("custom", "data")
+
+    def test_listener_errors_can_be_logged(self):
+        config = BaseConfig(self.app_name)
+        log_records = []
+
+        class TestHandler(logging.Handler):
+            def emit(self, record):
+                log_records.append(record)
+
+        logger = logging.Logger("test")
+        logger.addHandler(TestHandler())
+        config.set_logger(logger)
+
+        def failing_listener(event, data):
+            raise ValueError("Test error")
+
+        config.subscribe("custom", failing_listener)
+        config.publish("custom", "data")
+
+        assert len(log_records) == 1, log_records
+        assert "Listener failed" in str(log_records[0].getMessage()), \
+            str(log_records[0].getMessage())
+
+    def test_set_logger_type_assert(self):
+        config = BaseConfig(self.app_name)
+        with self.assertRaises(TypeError):
+            config.set_logger("not a logger")
+
+    def test_set_suppress_listener_errors_type_assert(self):
+        config = BaseConfig(self.app_name)
+        with self.assertRaises(TypeError):
+            config.set_suppress_listener_errors("not a bool")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 from .errors import type_assert
 import json
+import logging
 import platform
 import os
 
@@ -113,8 +114,16 @@ class ConfigProtocol(Protocol):
             `('parent', 'child')` does not trigger `'parent'` listeners.
             Deduplicates listeners to avoid calling the same listener
             more than once. Exceptions raised by listeners are
-            suppressed.
+            suppressed by default.
         """
+        ...
+
+    def set_logger(self, logger: logging.Logger) -> None:
+        """Configures a logger for listener error reporting."""
+        ...
+
+    def set_suppress_listener_errors(self, suppress: bool) -> None:
+        """Enables/disables suppression of exceptions from listeners."""
         ...
 
 
@@ -125,12 +134,16 @@ class BaseConfig(ABC):
         str|tuple[str],
         dict[Callable[[str|tuple[str], Any], None], None]
     ]
+    _logger: logging.Logger | None
+    _suppress_listener_errors: bool
 
     def __init__(self, app_name: str):
         """Initializes the config object."""
         self.app_name = app_name
         self.settings = {}
         self._subscriptions = {}
+        self._logger = None
+        self._suppress_listener_errors = True
         os.makedirs(self.path(), exist_ok=True)
 
     @abstractmethod
@@ -312,7 +325,7 @@ class BaseConfig(ABC):
             `('parent', 'child')` does not trigger `'parent'` listeners.
             Deduplicates listeners to avoid calling the same listener
             more than once. Exceptions raised by listeners are
-            suppressed.
+            suppressed by default.
         """
         event = tuple(event) if isinstance(event, list) else event
         type_assert(type(event) in (str, tuple), 'event must be str|tuple[str]')
@@ -353,8 +366,21 @@ class BaseConfig(ABC):
             called.add(listener)
             try:
                 listener(event, data)
-            except Exception:
-                ...
+            except Exception as e:
+                if self._logger:
+                    self._logger.exception(f"Listener failed for event {event}")
+                if not self._suppress_listener_errors:
+                    raise
+
+    def set_logger(self, logger: logging.Logger) -> None:
+        """Configures a logger for listener error reporting."""
+        type_assert(isinstance(logger, logging.Logger), 'logger must be logging.Logger')
+        self._logger = logger
+
+    def set_suppress_listener_errors(self, suppress: bool) -> None:
+        """Enables/disables suppression of exceptions from listeners."""
+        type_assert(type(suppress) is bool, 'suppress must be bool')
+        self._suppress_listener_errors = suppress
 
 
 class WindowsConfig(BaseConfig):
