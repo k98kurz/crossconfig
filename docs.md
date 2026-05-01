@@ -83,7 +83,15 @@ parent levels and wildcards (i.e. `('*', *key)`, `('set', '*')`, `('unset',
 `('parent,')` triggers `'parent'` listeners, but publishing `('parent',
 'child')` does not trigger `'parent'` listeners. Deduplicates listeners to avoid
 calling the same listener more than once. Exceptions raised by listeners are
-suppressed.
+suppressed by default.
+
+##### `set_logger(logger: logging.Logger) -> None:`
+
+Configures a logger for listener error reporting.
+
+##### `set_suppress_listener_errors(suppress: bool) -> None:`
+
+Enables/disables suppression of exceptions from listeners.
 
 ### `BaseConfig(ABC)`
 
@@ -93,6 +101,8 @@ suppressed.
 - settings: dict[str, bool | str | int | float | list | dict]
 - _subscriptions: dict[str | tuple[str], dict[Callable[[str | tuple[str], Any],
 None], None]]
+- _logger: logging.Logger | None
+- _suppress_listener_errors: bool
 
 #### Methods
 
@@ -173,7 +183,15 @@ parent levels and wildcards (i.e. `('*', *key)`, `('set', '*')`, `('unset',
 `('parent,')` triggers `'parent'` listeners, but publishing `('parent',
 'child')` does not trigger `'parent'` listeners. Deduplicates listeners to avoid
 calling the same listener more than once. Exceptions raised by listeners are
-suppressed.
+suppressed by default.
+
+##### `set_logger(logger: logging.Logger) -> None:`
+
+Configures a logger for listener error reporting.
+
+##### `set_suppress_listener_errors(suppress: bool) -> None:`
+
+Enables/disables suppression of exceptions from listeners.
 
 ### `WindowsConfig(BaseConfig)`
 
@@ -183,6 +201,8 @@ suppressed.
 - settings: dict[str, bool | str | int | float | list | dict]
 - _subscriptions: dict[str | tuple[str], dict[Callable[[str | tuple[str], Any],
 None], None]]
+- _logger: logging.Logger | None
+- _suppress_listener_errors: bool
 
 #### Methods
 
@@ -203,6 +223,8 @@ current user in Windows, and it is scoped to the app name.
 - settings: dict[str, bool | str | int | float | list | dict]
 - _subscriptions: dict[str | tuple[str], dict[Callable[[str | tuple[str], Any],
 None], None]]
+- _logger: logging.Logger | None
+- _suppress_listener_errors: bool
 
 #### Methods
 
@@ -223,6 +245,8 @@ current user in Posix, and it is scoped to the app name.
 - settings: dict[str, bool | str | int | float | list | dict]
 - _subscriptions: dict[str | tuple[str], dict[Callable[[str | tuple[str], Any],
 None], None]]
+- _logger: logging.Logger | None
+- _suppress_listener_errors: bool
 
 #### Methods
 

@@ -1,3 +1,11 @@
+## 0.0.8
+
+- Added configurable listener error handling
+  - `set_suppress_listener_errors(bool)` to enable/disable error suppression
+  - `set_logger(logging.Logger)` to configure error logging
+  - Listener exceptions are suppressed by default
+  - With logger configured, listener errors are logged with full traceback
+
 ## 0.0.7
 
 - Breaking change: `path()` and `base_path()` methods now return `pathlib.Path` objects instead of strings

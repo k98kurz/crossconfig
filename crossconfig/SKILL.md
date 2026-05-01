@@ -157,6 +157,19 @@ config.publish("custom_event", {"data": "value"})
 
 **Note:** String and single-element tuple events trigger each other's subscribers. `config.subscribe("custom", fn)` is triggered by both `publish("custom")` and `publish(("custom",))`. `config.subscribe(("custom",), fn)` is triggered by both `publish(("custom",))` and `publish("custom")`. Multi-element tuples like `("custom", "child")` do not trigger string subscribers.
 
+### Configuring Error Handling and Logging
+Listener exceptions are suppressed by default. Configure behavior:
+
+```python
+# Disable error suppression
+config.set_suppress_listener_errors(False)
+
+# Add logging for listener errors
+import logging
+logger = logging.getLogger("my_app")
+config.set_logger(logger)
+```
+
 ### Unsubscribing
 ```python
 listener = lambda e, d: print(f"Event: {e}")

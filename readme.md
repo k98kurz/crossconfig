@@ -67,7 +67,8 @@ config.unset("ui")
 assert config.get(["ui", "theme"], "default") == "default"
 ```
 
-Values can be any JSON-compatible type: `bool`, `str`, `int`, `float`, `list`, or `dict`.
+Values can be any JSON-compatible type: `bool`, `str`, `int`, `float`, `list`,
+or `dict`.
 
 ### Event System
 
@@ -189,8 +190,46 @@ config.unsubscribe("custom_event", listener)
 config.publish("custom_event", {"message": "hello again"})
 ```
 
-**Note:** String and single-element tuple events trigger each other's subscribers. Subscribing to `"custom"` is triggered by both `publish("custom")` and `publish(("custom",))`. Subscribing to `("custom",)` is triggered by both `publish(("custom",))` and `publish("custom")`. Multi-element tuples like `("event", "child")` do not trigger string subscribers.
+**Note:** String and single-element tuple events trigger each other's
+subscribers. Subscribing to `"custom"` is triggered by both `publish("custom")`
+and `publish(("custom",))`. Subscribing to `("custom",)` is triggered by both
+`publish(("custom",))` and `publish("custom")`. Multi-element tuples like
+`("event", "child")` do not trigger string subscribers.
 </details>
+
+### Configuring Error Handling and Logging
+
+By default, exceptions raised by event listeners are silently suppressed. This
+prevents one failing listener from stopping execution or other listeners from
+running. You can configure this behavior and add logging for listener errors:
+
+```python
+config = get_config("my_app")
+
+# Disable error suppression (listeners can raise exceptions)
+config.set_suppress_listener_errors(False)
+
+# Add logging for listener errors
+import logging
+logger = logging.getLogger("my_app")
+config.set_logger(logger)
+```
+
+With a logger configured, listener errors are logged with exception details:
+
+```python
+def failing_listener(event, data):
+    raise ValueError("Something went wrong")
+
+config.subscribe("custom", failing_listener)
+config.publish("custom", "data")
+# Logs: ERROR:my_app:Listener failed for event custom
+# Traceback (most recent call last):
+#   ...
+# ValueError: Something went wrong
+```
+
+Logging and error suppression can be enabled or disabled independently.
 
 ### Notes
 
