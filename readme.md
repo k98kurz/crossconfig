@@ -197,7 +197,8 @@ and `publish(("custom",))`. Subscribing to `("custom",)` is triggered by both
 `("event", "child")` do not trigger string subscribers.
 </details>
 
-### Configuring Error Handling and Logging
+<details>
+<summary>Configuring Error Handling and Logging</summary>
 
 By default, exceptions raised by event listeners are silently suppressed. This
 prevents one failing listener from stopping execution or other listeners from
@@ -230,6 +231,7 @@ config.publish("custom", "data")
 ```
 
 Logging and error suppression can be enabled or disabled independently.
+</details>
 
 ### Notes
 
